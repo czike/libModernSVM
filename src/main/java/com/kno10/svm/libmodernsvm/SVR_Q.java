@@ -32,6 +32,7 @@ class SVR_Q extends Kernel
 	}
 
 	@Override
+	public
 	void swap_index(int i, int j)
 	{
 		do {byte _=sign[i]; sign[i]=sign[j]; sign[j]=_;} while(false);
@@ -40,6 +41,7 @@ class SVR_Q extends Kernel
 	}
 
 	@Override
+	public
 	float[] get_Q(int i, int len)
 	{
 		float[][] data = new float[1][];
@@ -60,6 +62,7 @@ class SVR_Q extends Kernel
 	}
 
 	@Override
+	public
 	double[] get_QD()
 	{
 		return QD;

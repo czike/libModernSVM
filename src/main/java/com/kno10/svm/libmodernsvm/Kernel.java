@@ -1,6 +1,6 @@
 package com.kno10.svm.libmodernsvm;
 
-abstract class Kernel extends QMatrix {
+abstract class Kernel implements QMatrix {
 	private svm_node[][] x;
 	private final double[] x_square;
 
@@ -10,13 +10,10 @@ abstract class Kernel extends QMatrix {
 	private final double gamma;
 	private final double coef0;
 
-	@Override
-	abstract float[] get_Q(int column, int len);
-	@Override
-	abstract double[] get_QD();
+	public	abstract float[] get_Q(int column, int len);
+	public abstract double[] get_QD();
 
-	@Override
-	void swap_index(int i, int j)
+	public	void swap_index(int i, int j)
 	{
 		do {svm_node[] _=x[i]; x[i]=x[j]; x[j]=_;} while(false);
 		if(x_square != null) do {double _=x_square[i]; x_square[i]=x_square[j]; x_square[j]=_;} while(false);

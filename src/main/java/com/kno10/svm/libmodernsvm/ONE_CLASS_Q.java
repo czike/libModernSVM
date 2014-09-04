@@ -15,6 +15,7 @@ class ONE_CLASS_Q extends Kernel
 	}
 
 	@Override
+	public
 	float[] get_Q(int i, int len)
 	{
 		float[][] data = new float[1][];
@@ -28,12 +29,14 @@ class ONE_CLASS_Q extends Kernel
 	}
 
 	@Override
+	public
 	double[] get_QD()
 	{
 		return QD;
 	}
 
 	@Override
+	public
 	void swap_index(int i, int j)
 	{
 		cache.swap_index(i,j);
