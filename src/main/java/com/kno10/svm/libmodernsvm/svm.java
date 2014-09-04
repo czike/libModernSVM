@@ -31,7 +31,7 @@ public class svm<T> {
 		{
 			alpha[i] = 0;
 			minus_ones[i] = -1;
-			if(prob.y[i] > 0) y[i] = +1; else y[i] = -1;
+			y[i] = (byte)((prob.y[i] > 0) ?  +1 : -1);
 		}
 
 		Solver s = new Solver();
@@ -59,10 +59,7 @@ public class svm<T> {
 		byte[] y = new byte[l];
 
 		for(i=0;i<l;i++)
-			if(prob.y[i]>0)
-				y[i] = +1;
-			else
-				y[i] = -1;
+			y[i] = (byte)((prob.y[i]>0) ? +1 : -1);
 
 		double sum_pos = nu*l/2;
 		double sum_neg = nu*l/2;
@@ -239,16 +236,8 @@ public class svm<T> {
 			if(Math.abs(alpha[i]) > 0)
 			{
 				++nSV;
-				if(prob.y[i] > 0)
-				{
-					if(Math.abs(alpha[i]) >= si.upper_bound_p)
+				if(Math.abs(alpha[i]) >= ((prob.y[i] > 0) ? si.upper_bound_p : si.upper_bound_n))
 					++nBSV;
-				}
-				else
-				{
-					if(Math.abs(alpha[i]) >= si.upper_bound_n)
-						++nBSV;
-				}
 			}
 		}
 
@@ -1241,16 +1230,6 @@ public class svm<T> {
 		fp.close();
 	}
 
-	private static double atof(String s)
-	{
-		return Double.valueOf(s).doubleValue();
-	}
-
-	private static int atoi(String s)
-	{
-		return Integer.parseInt(s);
-	}
-
 	private static boolean read_model_header(BufferedReader fp, svm_model<svm_node[]> model)
 	{
 		svm_parameter param = new svm_parameter();
@@ -1297,22 +1276,22 @@ public class svm<T> {
 					}
 				}
 				else if(cmd.startsWith("degree"))
-					param.degree = atoi(arg);
+					param.degree = Integer.parseInt(arg);
 				else if(cmd.startsWith("gamma"))
-					param.gamma = atof(arg);
+					param.gamma = Double.parseDouble(arg);
 				else if(cmd.startsWith("coef0"))
-					param.coef0 = atof(arg);
+					param.coef0 = Double.parseDouble(arg);
 				else if(cmd.startsWith("nr_class"))
-					model.nr_class = atoi(arg);
+					model.nr_class = Integer.parseInt(arg);
 				else if(cmd.startsWith("total_sv"))
-					model.l = atoi(arg);
+					model.l = Integer.parseInt(arg);
 				else if(cmd.startsWith("rho"))
 				{
 					int n = model.nr_class * (model.nr_class-1)/2;
 					model.rho = new double[n];
 					StringTokenizer st = new StringTokenizer(arg);
 					for(int i=0;i<n;i++)
-						model.rho[i] = atof(st.nextToken());
+						model.rho[i] = Double.parseDouble(st.nextToken());
 				}
 				else if(cmd.startsWith("label"))
 				{
@@ -1320,7 +1299,7 @@ public class svm<T> {
 					model.label = new int[n];
 					StringTokenizer st = new StringTokenizer(arg);
 					for(int i=0;i<n;i++)
-						model.label[i] = atoi(st.nextToken());					
+						model.label[i] = Integer.parseInt(st.nextToken());					
 				}
 				else if(cmd.startsWith("probA"))
 				{
@@ -1328,7 +1307,7 @@ public class svm<T> {
 					model.probA = new double[n];
 					StringTokenizer st = new StringTokenizer(arg);
 					for(int i=0;i<n;i++)
-						model.probA[i] = atof(st.nextToken());					
+						model.probA[i] = Double.parseDouble(st.nextToken());					
 				}
 				else if(cmd.startsWith("probB"))
 				{
@@ -1336,7 +1315,7 @@ public class svm<T> {
 					model.probB = new double[n];
 					StringTokenizer st = new StringTokenizer(arg);
 					for(int i=0;i<n;i++)
-						model.probB[i] = atof(st.nextToken());					
+						model.probB[i] = Double.parseDouble(st.nextToken());					
 				}
 				else if(cmd.startsWith("nr_sv"))
 				{
@@ -1344,7 +1323,7 @@ public class svm<T> {
 					model.nSV = new int[n];
 					StringTokenizer st = new StringTokenizer(arg);
 					for(int i=0;i<n;i++)
-						model.nSV[i] = atoi(st.nextToken());
+						model.nSV[i] = Integer.parseInt(st.nextToken());
 				}
 				else if(cmd.startsWith("SV"))
 				{
@@ -1399,14 +1378,14 @@ public class svm<T> {
 			StringTokenizer st = new StringTokenizer(line," \t\n\r\f:");
 
 			for(int k=0;k<m;k++)
-				model.sv_coef[k][i] = atof(st.nextToken());
+				model.sv_coef[k][i] = Double.parseDouble(st.nextToken());
 			int n = st.countTokens()/2;
 			model.SV[i] = new svm_node[n];
 			for(int j=0;j<n;j++)
 			{
 				model.SV[i][j] = new svm_node();
-				model.SV[i][j].index = atoi(st.nextToken());
-				model.SV[i][j].value = atof(st.nextToken());
+				model.SV[i][j].index = Integer.parseInt(st.nextToken());
+				model.SV[i][j].value = Double.parseDouble(st.nextToken());
 			}
 		}
 
