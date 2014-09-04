@@ -32,7 +32,7 @@ public class svm {
 		}
 
 		Solver s = new Solver();
-		s.Solve(l, new SVC_Q(prob,param.makeKernelFunction(),param,y), minus_ones, y,
+		s.Solve(l, new SVC_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(),param.cache_size,y), minus_ones, y,
 			alpha, Cp, Cn, param.eps, si, param.shrinking);
 
 		double sum_alpha=0;
@@ -82,7 +82,7 @@ public class svm {
 			zeros[i] = 0;
 
 		Solver_NU s = new Solver_NU();
-		s.Solve(l, new SVC_Q(prob,param.makeKernelFunction(),param,y), zeros, y,
+		s.Solve(l, new SVC_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(),param.cache_size,y), zeros, y,
 			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
 		double r = si.r;
 
@@ -121,7 +121,7 @@ public class svm {
 		}
 
 		Solver s = new Solver();
-		s.Solve(l, new ONE_CLASS_Q(prob,param.makeKernelFunction(),param), zeros, ones,
+		s.Solve(l, new ONE_CLASS_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(),param.cache_size), zeros, ones,
 			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
 	}
 
@@ -146,7 +146,7 @@ public class svm {
 		}
 
 		Solver s = new Solver();
-		s.Solve(2*l, new SVR_Q(prob,param.makeKernelFunction(),param), linear_term, y,
+		s.Solve(2*l, new SVR_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(),param.cache_size), linear_term, y,
 			alpha2, param.C, param.C, param.eps, si, param.shrinking);
 
 		double sum_alpha = 0;
@@ -182,7 +182,7 @@ public class svm {
 		}
 
 		Solver_NU s = new Solver_NU();
-		s.Solve(2*l, new SVR_Q(prob,param.makeKernelFunction(), param), linear_term, y,
+		s.Solve(2*l, new SVR_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(), param.cache_size), linear_term, y,
 			alpha2, C, C, param.eps, si, param.shrinking);
 
 		LOG.info("epsilon = "+(-si.r)+"\n");
