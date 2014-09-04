@@ -1,5 +1,6 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
+import com.kno10.svm.libmodernsvm.ArrayUtil;
 import com.kno10.svm.libmodernsvm.svm_node;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.variants.QMatrix;
@@ -12,10 +13,7 @@ public abstract class Kernel<T> implements QMatrix {
 	abstract public double[] get_QD();
 
 	public void swap_index(int i, int j) {
-		// Swap nodes
-		Object tmp = x[i];
-		x[i] = x[j];
-		x[j] = tmp;
+		ArrayUtil.swap(x, i, j);
 		// Swap in cache, too:
 		cache.swap_index(i, j);
 	}

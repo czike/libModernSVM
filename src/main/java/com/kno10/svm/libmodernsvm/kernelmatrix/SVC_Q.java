@@ -1,5 +1,6 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
+import com.kno10.svm.libmodernsvm.ArrayUtil;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.variants.SVM_C;
 import com.kno10.svm.libmodernsvm.variants.SVM_Nu;
@@ -26,8 +27,6 @@ public class SVC_Q<T> extends KernelWithQD<T> {
 	@Override
 	public void swap_index(int i, int j) {
 		super.swap_index(i, j);
-		byte tmpy = y[i];
-		y[i] = y[j];
-		y[j] = tmpy;
+		ArrayUtil.swap(y, i, j);
 	}
 }

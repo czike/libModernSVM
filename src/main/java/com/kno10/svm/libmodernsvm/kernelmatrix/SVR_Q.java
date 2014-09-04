@@ -1,5 +1,6 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
+import com.kno10.svm.libmodernsvm.ArrayUtil;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.variants.SVR_Epsilon;
 import com.kno10.svm.libmodernsvm.variants.SVR_Nu;
@@ -37,18 +38,10 @@ public class SVR_Q<T> extends Kernel<T> {
 
 	@Override
 	public void swap_index(int i, int j) {
-		// Swap sign
-		byte tmps = sign[i];
-		sign[i] = sign[j];
-		sign[j] = tmps;
-		// Swap indexes
-		int tmpi = index[i];
-		index[i] = index[j];
-		index[j] = tmpi;
-		// Swap QD
-		double tmp = QD[i];
-		QD[i] = QD[j];
-		QD[j] = tmp;
+		// Note: not swapped in the cache!
+		ArrayUtil.swap(sign, i, j);
+		ArrayUtil.swap(index, i, j);
+		ArrayUtil.swap(QD, i, j);
 	}
 
 	@Override

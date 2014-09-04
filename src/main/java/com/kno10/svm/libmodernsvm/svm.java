@@ -196,9 +196,7 @@ public class svm<T> {
 			perm[i] = i;
 		for (int i = 0; i < prob.l; i++) {
 			int j = i + rand.nextInt(prob.l - i);
-			int tmp = perm[i];
-			perm[i] = perm[j];
-			perm[j] = tmp;
+			ArrayUtil.swap(perm, i, j);
 		}
 		for (int i = 0; i < nr_fold; i++) {
 			int begin = i * prob.l / nr_fold;
@@ -335,16 +333,8 @@ public class svm<T> {
 		// data corresponding to the +1 instances.
 		//
 		if (nr_class == 2 && label[0] == -1 && label[1] == +1) {
-			{
-				int tmp = label[0];
-				label[0] = label[1];
-				label[1] = tmp;
-			}
-			{
-				int tmp = count[0];
-				count[0] = count[1];
-				count[1] = tmp;
-			}
+			ArrayUtil.swap(label, 0, 1);
+			ArrayUtil.swap(count,0,1);
 			for (int i = 0; i < l; i++) {
 				data_label[i] = (data_label[i] == 0) ? 1 : 0;
 			}
@@ -627,9 +617,7 @@ public class svm<T> {
 			for (int c = 0; c < nr_class; c++)
 				for (int i = 0; i < count[c]; i++) {
 					int j = i + rand.nextInt(count[c] - i);
-					int tmp = index[start[c] + j];
-					index[start[c] + j] = index[start[c] + i];
-					index[start[c] + i] = tmp;
+					ArrayUtil.swap(index, start[c] + i, start[c] + j);
 				}
 			for (int i = 0; i < nr_fold; i++) {
 				fold_count[i] = 0;
@@ -657,9 +645,7 @@ public class svm<T> {
 				perm[i] = i;
 			for (int i = 0; i < l; i++) {
 				int j = i + rand.nextInt(l - i);
-				int tmp = perm[i];
-				perm[i] = perm[j];
-				perm[j] = tmp;
+				ArrayUtil.swap(perm, i,j);
 			}
 			for (int i = 0; i <= nr_fold; i++)
 				fold_start[i] = i * l / nr_fold;
