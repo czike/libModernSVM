@@ -1,4 +1,4 @@
-package com.kno10.svm.libmodernsvm;
+package com.kno10.svm.libmodernsvm.variants;
 
 /**
  * API to get kernel similarity values.

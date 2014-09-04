@@ -1,16 +1,16 @@
 package com.kno10.svm.libmodernsvm;
 
-import com.kno10.svm.libmodernsvm.svm.AbstractSVM;
-import com.kno10.svm.libmodernsvm.svm.SVM_C;
-import com.kno10.svm.libmodernsvm.svm.SVM_Nu;
-import com.kno10.svm.libmodernsvm.svm.SVM_OneClass;
-import com.kno10.svm.libmodernsvm.svm.SVR_Epsilon;
-import com.kno10.svm.libmodernsvm.svm.SVR_Nu;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelfunction.LinearKernelFunction;
 import com.kno10.svm.libmodernsvm.kernelfunction.PolynomialKernelFunction;
 import com.kno10.svm.libmodernsvm.kernelfunction.RadialBasisKernelFunction;
 import com.kno10.svm.libmodernsvm.kernelfunction.SigmoidKernelFunction;
+import com.kno10.svm.libmodernsvm.variants.AbstractSingleSVM;
+import com.kno10.svm.libmodernsvm.variants.SVM_C;
+import com.kno10.svm.libmodernsvm.variants.SVM_Nu;
+import com.kno10.svm.libmodernsvm.variants.SVM_OneClass;
+import com.kno10.svm.libmodernsvm.variants.SVR_Epsilon;
+import com.kno10.svm.libmodernsvm.variants.SVR_Nu;
 
 public class svm_parameter implements Cloneable, java.io.Serializable {
 	/* svm_type */
@@ -54,7 +54,7 @@ public class svm_parameter implements Cloneable, java.io.Serializable {
 		}
 	}
 
-	public AbstractSVM<svm_node[]> makeSVM(double Cp, double Cn) {
+	public AbstractSingleSVM<svm_node[]> makeSVM(double Cp, double Cn) {
 		switch (svm_type) {
 		case svm_parameter.C_SVC:
 			return new SVM_C<svm_node[]>(eps, shrinking, cache_size,

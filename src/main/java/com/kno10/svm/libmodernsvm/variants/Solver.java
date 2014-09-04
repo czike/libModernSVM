@@ -1,5 +1,6 @@
-package com.kno10.svm.libmodernsvm;
+package com.kno10.svm.libmodernsvm.variants;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 // An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
@@ -20,7 +21,7 @@ import java.util.logging.Logger;
 //
 // solution will be put in \alpha, objective value will be put in obj
 //
-class Solver {
+public class Solver {
 	private static final Logger LOG = Logger.getLogger(Solver.class.getName());
 	
 	int active_size;
@@ -72,13 +73,13 @@ class Solver {
 	void swap_index(int i, int j)
 	{
 		Q.swap_index(i,j);
-		do {byte _=y[i]; y[i]=y[j]; y[j]=_;} while(false);
-		do {double _=G[i]; G[i]=G[j]; G[j]=_;} while(false);
-		do {byte _=alpha_status[i]; alpha_status[i]=alpha_status[j]; alpha_status[j]=_;} while(false);
-		do {double _=alpha[i]; alpha[i]=alpha[j]; alpha[j]=_;} while(false);
-		do {double _=p[i]; p[i]=p[j]; p[j]=_;} while(false);
-		do {int _=active_set[i]; active_set[i]=active_set[j]; active_set[j]=_;} while(false);
-		do {double _=G_bar[i]; G_bar[i]=G_bar[j]; G_bar[j]=_;} while(false);
+		{byte _=y[i]; y[i]=y[j]; y[j]=_;}
+		{double _=G[i]; G[i]=G[j]; G[j]=_;}
+		{byte _=alpha_status[i]; alpha_status[i]=alpha_status[j]; alpha_status[j]=_;}
+		{double _=alpha[i]; alpha[i]=alpha[j]; alpha[j]=_;}
+		{double _=p[i]; p[i]=p[j]; p[j]=_;}
+		{int _=active_set[i]; active_set[i]=active_set[j]; active_set[j]=_;}
+		{double _=G_bar[i]; G_bar[i]=G_bar[j]; G_bar[j]=_;}
 	}
 
 	void reconstruct_gradient()
@@ -123,9 +124,10 @@ class Solver {
 		}
 	}
 
-	void Solve(int l, QMatrix Q, double[] p_, byte[] y_,
-		   double[] alpha_, double Cp, double Cn, double eps, SolutionInfo si, int shrinking)
+	SolutionInfo solve(int l, QMatrix Q, double[] p_, byte[] y_,
+		   double[] alpha_, double Cp, double Cn, double eps, int shrinking)
 	{
+		SolutionInfo si = new SolutionInfo();
 		this.l = l;
 		this.Q = Q;
 		QD = Q.get_QD();
@@ -388,7 +390,10 @@ class Solver {
 		si.upper_bound_p = Cp;
 		si.upper_bound_n = Cn;
 
-		LOG.info("\noptimization finished, #iter = "+iter+"\n");
+		if (LOG.isLoggable(Level.INFO)) {
+			LOG.info("\noptimization finished, #iter = "+iter+"\n");
+		}
+		return si;
 	}
 
 	// return 1 if already optimal, return 0 otherwise

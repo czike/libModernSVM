@@ -1,4 +1,4 @@
-package com.kno10.svm.libmodernsvm;
+package com.kno10.svm.libmodernsvm.variants;
 
 
 //
@@ -6,17 +6,17 @@ package com.kno10.svm.libmodernsvm;
 //
 // additional constraint: e^T \alpha = constant
 //
-final class Solver_NU extends Solver
+public class Solver_NU extends Solver
 {
 	private SolutionInfo si;
 
 	@Override
-	void Solve(int l, QMatrix Q, double[] p, byte[] y,
+	SolutionInfo solve(int l, QMatrix Q, double[] p, byte[] y,
 		   double[] alpha, double Cp, double Cn, double eps,
-		   SolutionInfo si, int shrinking)
+		   int shrinking)
 	{
-		this.si = si;
-		super.Solve(l,Q,p,y,alpha,Cp,Cn,eps,si,shrinking);
+		this.si = super.solve(l,Q,p,y,alpha,Cp,Cn,eps,shrinking);
+		return si;
 	}
 
 	@Override
