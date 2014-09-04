@@ -1,13 +1,15 @@
 package com.kno10.svm.libmodernsvm;
 
+import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
+
 class ONE_CLASS_Q extends Kernel
 {
 	private final Cache cache;
 	private final double[] QD;
 
-	ONE_CLASS_Q(svm_problem prob, svm_parameter param)
+	ONE_CLASS_Q(svm_problem prob, KernelFunction<svm_node[]> kf_, svm_parameter param)
 	{
-		super(prob.l, prob.x, param);
+		super(prob.l, prob.x, kf_);
 		cache = new Cache(prob.l,(long)(param.cache_size*(1<<20)));
 		QD = new double[prob.l];
 		for(int i=0;i<prob.l;i++)

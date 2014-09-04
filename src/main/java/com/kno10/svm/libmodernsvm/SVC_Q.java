@@ -1,5 +1,7 @@
 package com.kno10.svm.libmodernsvm;
 
+import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
+
 //
 // Q matrices for various formulations
 //
@@ -9,9 +11,9 @@ class SVC_Q extends Kernel
 	private final Cache cache;
 	private final double[] QD;
 
-	SVC_Q(svm_problem prob, svm_parameter param, byte[] y_)
+	SVC_Q(svm_problem prob, KernelFunction<svm_node[]> kf_, svm_parameter param, byte[] y_)
 	{
-		super(prob.l, prob.x, param);
+		super(prob.l, prob.x, kf_);
 		y = (byte[])y_.clone();
 		cache = new Cache(prob.l,(long)(param.cache_size*(1<<20)));
 		QD = new double[prob.l];

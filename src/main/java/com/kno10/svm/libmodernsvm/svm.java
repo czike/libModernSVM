@@ -3,6 +3,8 @@ import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
 
+import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
+
 public class svm {
 	private static final Logger LOG = Logger.getLogger(svm.class.getName());
 	
@@ -30,7 +32,7 @@ public class svm {
 		}
 
 		Solver s = new Solver();
-		s.Solve(l, new SVC_Q(prob,param,y), minus_ones, y,
+		s.Solve(l, new SVC_Q(prob,param.makeKernelFunction(),param,y), minus_ones, y,
 			alpha, Cp, Cn, param.eps, si, param.shrinking);
 
 		double sum_alpha=0;
@@ -80,7 +82,7 @@ public class svm {
 			zeros[i] = 0;
 
 		Solver_NU s = new Solver_NU();
-		s.Solve(l, new SVC_Q(prob,param,y), zeros, y,
+		s.Solve(l, new SVC_Q(prob,param.makeKernelFunction(),param,y), zeros, y,
 			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
 		double r = si.r;
 
@@ -119,7 +121,7 @@ public class svm {
 		}
 
 		Solver s = new Solver();
-		s.Solve(l, new ONE_CLASS_Q(prob,param), zeros, ones,
+		s.Solve(l, new ONE_CLASS_Q(prob,param.makeKernelFunction(),param), zeros, ones,
 			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
 	}
 
@@ -144,7 +146,7 @@ public class svm {
 		}
 
 		Solver s = new Solver();
-		s.Solve(2*l, new SVR_Q(prob,param), linear_term, y,
+		s.Solve(2*l, new SVR_Q(prob,param.makeKernelFunction(),param), linear_term, y,
 			alpha2, param.C, param.C, param.eps, si, param.shrinking);
 
 		double sum_alpha = 0;
@@ -180,7 +182,7 @@ public class svm {
 		}
 
 		Solver_NU s = new Solver_NU();
-		s.Solve(2*l, new SVR_Q(prob,param), linear_term, y,
+		s.Solve(2*l, new SVR_Q(prob,param.makeKernelFunction(), param), linear_term, y,
 			alpha2, C, C, param.eps, si, param.shrinking);
 
 		LOG.info("epsilon = "+(-si.r)+"\n");
@@ -1022,6 +1024,7 @@ public class svm {
 
 	public static double svm_predict_values(svm_model model, svm_node[] x, double[] dec_values)
 	{
+		KernelFunction<svm_node[]> kf = model.param.makeKernelFunction();
 		int i;
 		if(model.param.svm_type == svm_parameter.ONE_CLASS ||
 		   model.param.svm_type == svm_parameter.EPSILON_SVR ||
@@ -1030,7 +1033,7 @@ public class svm {
 			double[] sv_coef = model.sv_coef[0];
 			double sum = 0;
 			for(i=0;i<model.l;i++)
-				sum += sv_coef[i] * Kernel.k_function(x,model.SV[i],model.param);
+				sum += sv_coef[i] * kf.kernel_function(x,model.SV[i]);
 			sum -= model.rho[0];
 			dec_values[0] = sum;
 
@@ -1046,7 +1049,7 @@ public class svm {
 		
 			double[] kvalue = new double[l];
 			for(i=0;i<l;i++)
-				kvalue[i] = Kernel.k_function(x,model.SV[i],model.param);
+				kvalue[i] = kf.kernel_function(x,model.SV[i]);
 
 			int[] start = new int[nr_class];
 			start[0] = 0;
