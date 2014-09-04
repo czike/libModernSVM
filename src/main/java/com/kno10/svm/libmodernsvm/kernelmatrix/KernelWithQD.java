@@ -13,7 +13,7 @@ public abstract class KernelWithQD<T> extends Kernel<T> {
 		for (int i = 0; i < l; i++)
 			QD[i] = kernel_function(i, i);
 	}
-
+	
 	@Override
 	public void swap_index(int i, int j) {
 		super.swap_index(i, j);

@@ -21,7 +21,7 @@ public class SVR_Q<T> extends Kernel<T> {
 			sign[k + l] = -1;
 			index[k] = k;
 			index[k + l] = k;
-			QD[k] = kernel_function(k, k);
+			QD[k] = similarity(k, k);
 			QD[k + l] = QD[k];
 		}
 		buffer = new float[2][2 * l];
@@ -48,11 +48,7 @@ public class SVR_Q<T> extends Kernel<T> {
 	public float[] get_Q(int i, int len) {
 		float[][] data = new float[1][];
 		int j, real_i = index[i];
-		if (cache.get_data(real_i, data, l) < l) {
-			for (j = 0; j < l; j++) {
-				data[0][j] = (float) kernel_function(real_i, j);
-			}
-		}
+		data[0] = super.get_Q(real_i, l);
 
 		// reorder and copy
 		float buf[] = buffer[next_buffer];
