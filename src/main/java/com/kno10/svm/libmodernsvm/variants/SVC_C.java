@@ -6,19 +6,24 @@ import java.util.logging.Logger;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.SVC_Q;
 
-public class SVM_C<T> extends AbstractSingleSVM<T> {
-	private static final Logger LOG = Logger.getLogger(SVM_C.class.getName());
+public class SVC_C<T> extends AbstractSVC<T> {
+	private static final Logger LOG = Logger.getLogger(SVC_C.class.getName());
 
-	double Cp, Cn;
+	double Cp = 1., Cn = 1.;
 
-	public SVM_C(double eps, int shrinking, double cache_size,double Cp, double Cn) {
+	public SVC_C(double eps, int shrinking, double cache_size) {
 		super(eps, shrinking, cache_size);
+	}
+
+	@Override
+	public void set_weights(double Cp, double Cn) {
 		this.Cp = Cp;
 		this.Cn = Cn;
 	}
 
 	@Override
-	protected Solver.SolutionInfo solve(int l, T[] x, double[] y_, KernelFunction<? super T> kernel_function) {
+	protected Solver.SolutionInfo solve(int l, T[] x, double[] y_,
+			KernelFunction<? super T> kernel_function) {
 		double[] minus_ones = new double[l];
 		byte[] y = new byte[l];
 
@@ -28,8 +33,9 @@ public class SVM_C<T> extends AbstractSingleSVM<T> {
 			y[i] = (byte) ((y_[i] > 0) ? +1 : -1);
 		}
 
-		Solver.SolutionInfo si = new Solver().solve(l, new SVC_Q<T>(l, x, kernel_function, cache_size, y),
-				minus_ones, y, alpha, Cp, Cn, eps, shrinking);
+		Solver.SolutionInfo si = new Solver().solve(l, new SVC_Q<T>(l, x,
+				kernel_function, cache_size, y), minus_ones, y, alpha, Cp, Cn,
+				eps, shrinking);
 
 		if (Cp == Cn && LOG.isLoggable(Level.INFO)) {
 			double sum_alpha = 0;

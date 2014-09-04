@@ -2,11 +2,11 @@ package com.kno10.svm.libmodernsvm.kernelmatrix;
 
 import com.kno10.svm.libmodernsvm.ArrayUtil;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
-import com.kno10.svm.libmodernsvm.variants.SVM_C;
-import com.kno10.svm.libmodernsvm.variants.SVM_Nu;
+import com.kno10.svm.libmodernsvm.variants.SVC_C;
+import com.kno10.svm.libmodernsvm.variants.SVC_Nu;
 
 /**
- * Q matrix used by {@link SVM_C} and {@link SVM_Nu} classification.
+ * Q matrix used by {@link SVC_C} and {@link SVC_Nu} classification.
  *
  * @param <T>
  */

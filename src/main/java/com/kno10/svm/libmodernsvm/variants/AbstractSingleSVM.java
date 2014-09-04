@@ -52,4 +52,8 @@ public abstract class AbstractSingleSVM<T> {
 	}
 
 	abstract protected Logger getLogger();
+
+	public void set_weights(double Cp, double Cn) {
+		// Ignore by default.
+	}
 }

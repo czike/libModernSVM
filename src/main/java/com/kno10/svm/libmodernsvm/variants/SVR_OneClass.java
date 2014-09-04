@@ -21,7 +21,7 @@ public class SVR_OneClass<T> extends AbstractSVR<T> {
 	}
 
 	@Override
-	protected Solver.SolutionInfo solve(int l, T[] x, double[] y, 
+	protected Solver.SolutionInfo solve(int l, T[] x, double[] y,
 			KernelFunction<? super T> kernel_function) {
 		double[] zeros = new double[l];
 		byte[] ones = new byte[l];

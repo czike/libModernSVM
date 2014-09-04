@@ -6,12 +6,12 @@ import java.util.logging.Logger;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.SVC_Q;
 
-public class SVM_Nu<T> extends AbstractSingleSVM<T> {
-	private static final Logger LOG = Logger.getLogger(SVM_Nu.class.getName());
+public class SVC_Nu<T> extends AbstractSVC<T> {
+	private static final Logger LOG = Logger.getLogger(SVC_Nu.class.getName());
 
 	protected double nu;
 
-	public SVM_Nu(double eps, int shrinking, double cache_size, double nu) {
+	public SVC_Nu(double eps, int shrinking, double cache_size, double nu) {
 		super(eps, shrinking, cache_size);
 		this.nu = nu;
 	}
