@@ -1,6 +1,26 @@
 package com.kno10.svm.libmodernsvm;
 
+import java.util.ArrayList;
+
 public class ArrayUtil {
+	/**
+	 * Swap two values in an object array.
+	 * 
+	 * @param data
+	 *            Data
+	 * @param i
+	 *            First position
+	 * @param j
+	 *            Second position
+	 * @param <T>
+	 *            Object type
+	 */
+	public static <T> void swap(ArrayList<T> data, int i, int j) {
+		T tmp = data.get(i);
+		data.set(i, data.get(j));
+		data.set(j, tmp);
+	}
+
 	/**
 	 * Swap two values in an object array.
 	 * 

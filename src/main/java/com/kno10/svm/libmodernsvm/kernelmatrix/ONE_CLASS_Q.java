@@ -1,5 +1,6 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
+import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.variants.SVR_OneClass;
 
@@ -11,8 +12,8 @@ import com.kno10.svm.libmodernsvm.variants.SVR_OneClass;
  * @param <T>
  */
 public class ONE_CLASS_Q<T> extends KernelWithQD<T> {
-	public ONE_CLASS_Q(int l, T[] x_, KernelFunction<? super T> kf_,
+	public ONE_CLASS_Q(DataSet<T> x, KernelFunction<? super T> kf,
 			double cache_size) {
-		super(l, x_, kf_, cache_size);
+		super(x, kf, cache_size);
 	}
 }

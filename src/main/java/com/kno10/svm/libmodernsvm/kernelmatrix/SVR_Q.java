@@ -1,6 +1,7 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
 import com.kno10.svm.libmodernsvm.ArrayUtil;
+import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.variants.SVR_Epsilon;
 import com.kno10.svm.libmodernsvm.variants.SVR_Nu;
@@ -18,9 +19,9 @@ public class SVR_Q<T> extends Kernel<T> {
 	private float[][] buffer;
 	private final double[] QD;
 
-	public SVR_Q(int l, T[] x_, KernelFunction<? super T> kf_, double cache_size) {
-		super(l, x_, kf_, cache_size);
-		this.l = l;
+	public SVR_Q(DataSet<T> x, KernelFunction<? super T> kf, double cache_size) {
+		super(x, kf, cache_size);
+		this.l = x.size();
 		QD = new double[2 * l];
 		sign = new byte[2 * l];
 		index = new int[2 * l];

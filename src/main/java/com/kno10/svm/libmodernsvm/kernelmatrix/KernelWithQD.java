@@ -1,15 +1,16 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
 import com.kno10.svm.libmodernsvm.ArrayUtil;
+import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 
 public abstract class KernelWithQD<T> extends Kernel<T> {
 	private final double[] QD;
 
-	public KernelWithQD(int l, T[] x_, KernelFunction<? super T> kf_,
+	public KernelWithQD(DataSet<T> x, KernelFunction<? super T> kf,
 			double cache_size) {
-		super(l, x_, kf_, cache_size);
-
+		super(x, kf, cache_size);
+		final int l = x.size();
 		QD = new double[l];
 		for (int i = 0; i < l; i++) {
 			QD[i] = kernel_function(i, i);

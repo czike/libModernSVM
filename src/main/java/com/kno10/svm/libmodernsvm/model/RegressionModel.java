@@ -7,7 +7,7 @@ public class RegressionModel<T> extends Model<T> {
 		double[] sv_coef = this.sv_coef[0];
 		double sum = -rho[0];
 		for (int i = 0; i < l; i++) {
-			sum += sv_coef[i] * kf.similarity(x, SV[i]);
+			sum += sv_coef[i] * kf.similarity(x, SV.get(i));
 		}
 		dec_values[0] = sum;
 		// TODO: OneClass classification thresholds this value at 0.
@@ -18,7 +18,7 @@ public class RegressionModel<T> extends Model<T> {
 		double[] sv_coef = this.sv_coef[0];
 		double sum = -rho[0];
 		for (int i = 0; i < l; i++) {
-			sum += sv_coef[i] * kf.similarity(x, SV[i]);
+			sum += sv_coef[i] * kf.similarity(x, SV.get(i));
 		}
 		// TODO: OneClass classification thresholds this value at 0.
 		return sum;

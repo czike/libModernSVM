@@ -11,7 +11,7 @@ public class ClassificationModel<T> extends Model<T> {
 	public int predict(T x, KernelFunction<? super T> kf, double[] dec_values) {
 		double[] kvalue = new double[l];
 		for (int i = 0; i < l; i++)
-			kvalue[i] = kf.similarity(x, SV[i]);
+			kvalue[i] = kf.similarity(x, SV.get(i));
 
 		int[] start = new int[nr_class];
 		for (int i = 1; i < nr_class; i++)
@@ -49,7 +49,7 @@ public class ClassificationModel<T> extends Model<T> {
 	public int predict(T x, KernelFunction<? super T> kf) {
 		double[] kvalue = new double[l];
 		for (int i = 0; i < l; i++)
-			kvalue[i] = kf.similarity(x, SV[i]);
+			kvalue[i] = kf.similarity(x, SV.get(i));
 
 		int[] start = new int[nr_class];
 		for (int i = 1; i < nr_class; i++)

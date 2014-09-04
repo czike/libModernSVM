@@ -1,8 +1,11 @@
 package com.kno10.svm.libmodernsvm;
 
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import com.kno10.svm.libmodernsvm.data.DataSet;
+import com.kno10.svm.libmodernsvm.data.DoubleWeightedArrayDataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.model.ClassificationModel;
 import com.kno10.svm.libmodernsvm.model.ProbabilisticClassificationModel;
@@ -11,7 +14,7 @@ import com.kno10.svm.libmodernsvm.variants.AbstractSVR;
 import com.kno10.svm.libmodernsvm.variants.AbstractSingleSVM;
 
 public class svm<T> {
-	static final Logger LOG = Logger.getLogger(svm.class.getName());
+	private static final Logger LOG = Logger.getLogger(svm.class.getName());
 
 	//
 	// construct and solve various formulations
@@ -22,13 +25,14 @@ public class svm<T> {
 	private static final boolean probability = false;
 
 	// Platt's binary SVM Probablistic Output: an improvement from Lin et al.
-	private static void sigmoid_train(int l, double[] dec_values,
-			double[] labels, double[] probAB) {
+	private static void sigmoid_train(double[] dec_values, DataSet<?> x,
+			double[] probAB) {
+		final int l = x.size();
 		double A, B;
 		double prior1 = 0, prior0 = 0;
 
 		for (int i = 0; i < l; i++)
-			if (labels[i] > 0)
+			if (x.value(i) > 0)
 				++prior1;
 			else
 				++prior0;
@@ -49,7 +53,7 @@ public class svm<T> {
 		double fval = 0.0;
 
 		for (int i = 0; i < l; i++) {
-			t[i] = (labels[i] > 0) ? hiTarget : loTarget;
+			t[i] = (x.value(i) > 0) ? hiTarget : loTarget;
 			fApB = dec_values[i] * A + B;
 			if (fApB >= 0)
 				fval += t[i] * fApB + Math.log(1 + Math.exp(-fApB));
@@ -129,9 +133,9 @@ public class svm<T> {
 	}
 
 	// Cross-validation decision values for probability estimates
-	private static void svm_binary_svc_probability(int l, svm_node[][] x,
-			double[] y, KernelFunction<svm_node[]> kf, double[] weighted_C,
-			double Cp, double Cn, double[] probAB) {
+	private static <T> void svm_binary_svc_probability(DataSet<T> x,
+			KernelFunction<? super T> kf, double Cp, double Cn, double[] probAB) {
+		final int l = x.size();
 		int nr_fold = 5;
 		int[] perm = new int[l];
 		double[] dec_values = new double[l];
@@ -146,26 +150,20 @@ public class svm<T> {
 		for (int i = 0; i < nr_fold; i++) {
 			int begin = i * l / nr_fold;
 			int end = (i + 1) * l / nr_fold;
-			svm_problem<svm_node[]> subprob = new svm_problem<svm_node[]>();
 
-			subprob.l = l - (end - begin);
-			subprob.x = new svm_node[subprob.l][];
-			subprob.y = new double[subprob.l];
+			int newl = l - (end - begin);
+			// FIXME: classification instead of regression?
+			DataSet<T> newx = new DoubleWeightedArrayDataSet<T>(newl);
 
-			int k = 0;
 			for (int j = 0; j < begin; j++) {
-				subprob.x[k] = x[perm[j]];
-				subprob.y[k] = y[perm[j]];
-				++k;
+				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
 			for (int j = end; j < l; j++) {
-				subprob.x[k] = x[perm[j]];
-				subprob.y[k] = y[perm[j]];
-				++k;
+				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
 			int p_count = 0, n_count = 0;
-			for (int j = 0; j < k; j++)
-				if (subprob.y[j] > 0)
+			for (int j = 0; j < newl; j++)
+				if (newx.value(j) > 0)
 					p_count++;
 				else
 					n_count++;
@@ -190,29 +188,30 @@ public class svm<T> {
 				subparam.weight_label[1] = -1;
 				subparam.weight[0] = Cp;
 				subparam.weight[1] = Cn;
-				ClassificationModel<svm_node[]> submodel = (ClassificationModel<svm_node[]>) svm_train_classification(
-						l, x, y, kf, svm, weighted_C);
+				ClassificationModel<T> submodel = (ClassificationModel<T>) svm_train_classification(
+						newx, kf, svm, new double[] { Cp, Cn });
 				for (int j = begin; j < end; j++) {
 					double[] dec_value = new double[1];
-					submodel.predict(x[perm[j]], kf, dec_value);
+					submodel.predict(x.get(perm[j]), kf, dec_value);
 					dec_values[perm[j]] = dec_value[0];
 					// ensure +1 -1 order; reason not using CV subroutine
 					dec_values[perm[j]] *= submodel.label[0];
 				}
 			}
 		}
-		sigmoid_train(l, dec_values, y, probAB);
+		sigmoid_train(dec_values, x, probAB);
 	}
 
-	private static double svm_svr_probability(int l, svm_node[][] x,
-			double[] y, KernelFunction<svm_node[]> kf, double[] probA) {
+	private static <T> double svm_svr_probability(DataSet<T> x,
+			KernelFunction<? super T> kf, double[] probA) {
+		final int l = x.size();
 		int nr_fold = 5;
 		double[] ymv = new double[l];
 		double mae = 0;
 
-		svm_cross_validation_regression(l, x, y, kf, nr_fold, ymv);
+		svm_cross_validation_regression(x, kf, nr_fold, ymv);
 		for (int i = 0; i < l; i++) {
-			ymv[i] = y[i] - ymv[i];
+			ymv[i] = x.value(i) - ymv[i];
 			mae += Math.abs(ymv[i]);
 		}
 		mae /= l;
@@ -233,9 +232,9 @@ public class svm<T> {
 	// label: label name, start: begin of each class, count: #data of classes,
 	// perm: indices to the original data
 	// perm, length l, must be allocated before calling this subroutine
-	private static void svm_group_classes(int l, double[] y,
-			int[] nr_class_ret, int[][] label_ret, int[][] start_ret,
-			int[][] count_ret, int[] perm) {
+	private static void svm_group_classes(DataSet<?> x, int[] nr_class_ret,
+			int[][] label_ret, int[][] start_ret, int[][] count_ret, int[] perm) {
+		final int l = x.size();
 		int max_nr_class = 16;
 		int nr_class = 0;
 		int[] label = new int[max_nr_class];
@@ -243,7 +242,7 @@ public class svm<T> {
 		int[] data_label = new int[l];
 
 		for (int i = 0; i < l; i++) {
-			int this_label = (int) (y[i]);
+			int this_label = x.classnum(i);
 			int j;
 			for (j = 0; j < nr_class; j++) {
 				if (this_label == label[j]) {
@@ -303,23 +302,23 @@ public class svm<T> {
 	//
 	// Interface functions
 	//
-	public static RegressionModel<svm_node[]> svm_train_regression(int l,
-			svm_node[][] x, double[] y, KernelFunction<svm_node[]> kf,
-			AbstractSingleSVM<svm_node[]> svm) {
+	public static <T> RegressionModel<T> svm_train_regression(DataSet<T> x,
+			KernelFunction<? super T> kf, AbstractSingleSVM<T> svm) {
 
 		// FIXME: Probability support is incomplete.
 		if (probability) {
 			double[] probA = new double[1];
-			probA[0] = svm_svr_probability(l, x, y, kf, probA);
+			probA[0] = svm_svr_probability(x, kf, probA);
 		}
 
-		svm.svm_train_one(l, x, y, kf);
-		return ((AbstractSVR<svm_node[]>) svm).make_model(l, x);
+		svm.svm_train_one(x, kf);
+		return ((AbstractSVR<T>) svm).make_model(x);
 	}
 
-	public ClassificationModel<svm_node[]> svm_train_classification(int l,
-			svm_node[][] x, double[] y, KernelFunction<svm_node[]> kf,
-			AbstractSingleSVM<svm_node[]> svm, double[] weighted_C) {
+	public static <T> ClassificationModel<T> svm_train_classification(
+			DataSet<T> x, KernelFunction<? super T> kf,
+			AbstractSingleSVM<T> svm, double[] weighted_C) {
+		final int l = x.size();
 		// classification
 		int[] tmp_nr_class = new int[1];
 		int[][] tmp_label = new int[1][];
@@ -328,7 +327,7 @@ public class svm<T> {
 		int[] perm = new int[l];
 
 		// group training data of the same class
-		svm_group_classes(l, y, tmp_nr_class, tmp_label, tmp_start, tmp_count,
+		svm_group_classes(x, tmp_nr_class, tmp_label, tmp_start, tmp_count,
 				perm);
 		int nr_class = tmp_nr_class[0];
 		int[] label = tmp_label[0];
@@ -338,11 +337,7 @@ public class svm<T> {
 		if (nr_class == 1)
 			LOG.info("WARNING: training data in only one class. See README for details.\n");
 
-		svm_node[][] nx = new svm_node[l][];
-		for (int i = 0; i < l; i++)
-			nx[i] = x[perm[i]];
-
-		// train k*(k-1)/2 models
+		// train k*(k-1)/2 binary models
 
 		boolean[] nonzero = new boolean[l];
 		for (int i = 0; i < l; i++)
@@ -351,33 +346,32 @@ public class svm<T> {
 		double[][] f_alpha = new double[pairs][];
 		double[] f_rho = new double[pairs];
 
+		double[] probA = probability ? new double[pairs] : null;
+		double[] probB = probability ? new double[pairs] : null;
+
 		int p = 0;
-		for (int i = 0; i < nr_class; i++)
+		for (int i = 0; i < nr_class; i++) {
 			for (int j = i + 1; j < nr_class; j++) {
-				svm_problem<svm_node[]> sub_prob = new svm_problem<svm_node[]>();
 				final int si = start[i], sj = start[j];
 				final int ci = count[i], cj = count[j];
-				sub_prob.l = ci + cj;
-				sub_prob.x = new svm_node[sub_prob.l][];
-				sub_prob.y = new double[sub_prob.l];
+				int newl = ci + cj;
+				DataSet<T> newx = new DoubleWeightedArrayDataSet<T>(newl);
 				for (int k = 0; k < ci; k++) {
-					sub_prob.x[k] = nx[si + k];
-					sub_prob.y[k] = +1;
+					newx.add(x.get(perm[si + k]), +1);
 				}
 				for (int k = 0; k < cj; k++) {
-					sub_prob.x[ci + k] = nx[sj + k];
-					sub_prob.y[ci + k] = -1;
+					newx.add(x.get(perm[sj + k]), -1);
 				}
 
-				/*
-				 * FIXME: re-add probability support if (probability == 1) {
-				 * double[] probAB = new double[2];
-				 * svm_binary_svc_probability(sub_prob, param, weighted_C[i],
-				 * weighted_C[j], probAB); probA[p] = probAB[0]; probB[p] =
-				 * probAB[1]; }
-				 */
+				if (probability) {
+					double[] probAB = new double[2];
+					svm_binary_svc_probability(newx, kf, weighted_C[i],
+							weighted_C[j], probAB);
+					probA[p] = probAB[0];
+					probB[p] = probAB[1];
+				}
 				svm.set_weights(weighted_C[i], weighted_C[j]);
-				svm.svm_train_one(sub_prob.l, sub_prob.x, sub_prob.y, kf);
+				svm.svm_train_one(newx, kf);
 				f_alpha[p] = svm.alpha;
 				f_rho[p] = svm.rho;
 				for (int k = 0; k < ci; k++)
@@ -388,10 +382,11 @@ public class svm<T> {
 						nonzero[sj + k] = true;
 				++p;
 			}
+		}
 
 		// build output
 
-		ClassificationModel<svm_node[]> model = new ClassificationModel<svm_node[]>();
+		ClassificationModel<T> model = new ClassificationModel<T>();
 		model.nr_class = nr_class;
 
 		model.label = new int[nr_class];
@@ -402,12 +397,13 @@ public class svm<T> {
 		for (int i = 0; i < pairs; i++)
 			model.rho[i] = f_rho[i];
 
-		/*
-		 * FIXME: re-add probability functionality if (param.probability == 1) {
-		 * model.probA = new double[pairs]; model.probB = new double[pairs]; for
-		 * (int i = 0; i < pairs; i++) { model.probA[i] = probA[i];
-		 * model.probB[i] = probB[i]; } }
-		 */
+		if (probability) {
+			ProbabilisticClassificationModel<T> pmodel = (ProbabilisticClassificationModel<T>) model;
+			for (int i = 0; i < pairs; i++) {
+				pmodel.probA[i] = probA[i];
+				pmodel.probB[i] = probB[i];
+			}
+		}
 
 		int nnz = 0;
 		int[] nz_count = new int[nr_class];
@@ -426,12 +422,12 @@ public class svm<T> {
 		LOG.info("Total nSV = " + nnz + "\n");
 
 		model.l = nnz;
-		model.SV = new svm_node[nnz][];
+		model.SV = new ArrayList<T>(nnz);
 		model.sv_indices = new int[nnz];
 		p = 0;
 		for (int i = 0; i < l; i++)
 			if (nonzero[i]) {
-				model.SV[p] = nx[i];
+				model.SV.add(x.get(perm[i]));
 				model.sv_indices[p++] = perm[i] + 1;
 			}
 
@@ -468,9 +464,9 @@ public class svm<T> {
 	}
 
 	// Stratified cross validation
-	public static void svm_cross_validation_regression(int l, svm_node[][] x,
-			double[] y, KernelFunction<svm_node[]> kf, int nr_fold,
-			double[] target) {
+	public static <T> void svm_cross_validation_regression(DataSet<T> x,
+			KernelFunction<? super T> kf, int nr_fold, double[] target) {
+		final int l = x.size();
 		int[] fold_start = new int[nr_fold + 1];
 		int[] perm = shuffledIndex(new int[l], l);
 		// Split into folds
@@ -480,30 +476,28 @@ public class svm<T> {
 		for (int i = 0; i < nr_fold; i++) {
 			int begin = fold_start[i];
 			int end = fold_start[i + 1];
-			svm_problem<svm_node[]> subprob = new svm_problem<svm_node[]>();
 
-			int newl = l - (end - begin);
-			svm_node[][] newx = new svm_node[subprob.l][];
-			double[] newy = new double[subprob.l];
+			final int newl = l - (end - begin);
+			DataSet<T> newx = new DoubleWeightedArrayDataSet<T>(newl);
 
 			int k = 0;
 			for (int j = 0; j < begin; ++j, ++k) {
-				newx[k] = x[perm[j]];
-				newy[k] = y[perm[j]];
+				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
 			for (int j = end; j < l; ++j, ++k) {
-				newx[k] = x[perm[j]];
-				newy[k] = y[perm[j]];
+				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
-			RegressionModel<svm_node[]> submodel = svm_train_regression(newl,
-					newx, newy, kf, svm);
+			RegressionModel<T> submodel = svm_train_regression(newx, kf, svm);
 			for (int j = begin; j < end; j++)
-				target[perm[j]] = submodel.predict(x[perm[j]], kf);
+				target[perm[j]] = submodel.predict(x.get(perm[j]), kf);
 		}
 	}
 
 	/**
 	 * Build a shuffled index array.
+	 * 
+	 * @param perm Array storing the permutation
+	 * @param l Size
 	 */
 	public static int[] shuffledIndex(int[] perm, int l) {
 		// Shuffle data set.
@@ -517,16 +511,17 @@ public class svm<T> {
 	}
 
 	// Stratified cross validation
-	public static void svm_cross_validation_classification(int l,
-			svm_node[][] x, double[] y, KernelFunction<svm_node[]> kf,
-			double[] weighted_C, int nr_fold, double[] target) {
+	public static <T> void svm_cross_validation_classification(DataSet<T> x,
+			KernelFunction<? super T> kf, double[] weighted_C, int nr_fold,
+			double[] target) {
+		final int l = x.size();
 		int[] fold_start = new int[nr_fold + 1];
 		int[] perm = new int[l];
 
 		// stratified cv may not give leave-one-out rate
 		// Each class to l folds -> some folds may have zero elements
 		if (nr_fold < l) {
-			stratifiedFolds(l, y, nr_fold, perm, fold_start);
+			stratifiedFolds(x, nr_fold, perm, fold_start);
 		} else {
 			perm = shuffledIndex(perm, l);
 			// Split into folds
@@ -537,45 +532,44 @@ public class svm<T> {
 		for (int i = 0; i < nr_fold; i++) {
 			int begin = fold_start[i];
 			int end = fold_start[i + 1];
-			svm_problem<svm_node[]> subprob = new svm_problem<svm_node[]>();
 
-			int newl = l - (end - begin);
-			svm_node[][] newx = new svm_node[subprob.l][];
-			double[] newy = new double[subprob.l];
+			final int newl = l - (end - begin);
+			DoubleWeightedArrayDataSet<T> newx = new DoubleWeightedArrayDataSet<T>(
+					newl);
+			double[] newy = new double[newl];
 
 			int k = 0;
 			for (int j = 0; j < begin; ++j, ++k) {
-				newx[k] = x[perm[j]];
-				newy[k] = y[perm[j]];
+				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
 			for (int j = end; j < l; ++j, ++k) {
-				newx[k] = x[perm[j]];
-				newy[k] = y[perm[j]];
+				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
-			ClassificationModel<svm_node[]> submodel = svm_train_classification(
-					newl, newx, newy, kf, svm, weighted_C);
+			ClassificationModel<T> submodel = svm_train_classification(newx,
+					kf, svm, weighted_C);
 			if (submodel instanceof ProbabilisticClassificationModel) {
-				ProbabilisticClassificationModel<svm_node[]> pm = (ProbabilisticClassificationModel<svm_node[]>) submodel;
+				ProbabilisticClassificationModel<T> pm = (ProbabilisticClassificationModel<T>) submodel;
 				double[] prob_estimates = new double[submodel.nr_class];
 				for (int j = begin; j < end; j++)
-					target[perm[j]] = pm.predict_prob(x[perm[j]], kf,
+					target[perm[j]] = pm.predict_prob(x.get(perm[j]), kf,
 							prob_estimates);
 			} else {
 				for (int j = begin; j < end; j++) {
-					target[perm[j]] = submodel.predict(x[perm[j]], kf);
+					target[perm[j]] = submodel.predict(x.get(perm[j]), kf);
 				}
 			}
 		}
 	}
 
-	public static void stratifiedFolds(int l, double[] y, int nr_fold,
-			int[] perm, int[] fold_start) {
+	public static void stratifiedFolds(DataSet<?> x, int nr_fold, int[] perm,
+			int[] fold_start) {
+		final int l = x.size();
 		int[] tmp_nr_class = new int[1];
 		int[][] tmp_label = new int[1][];
 		int[][] tmp_start = new int[1][];
 		int[][] tmp_count = new int[1][];
 
-		svm_group_classes(l, y, tmp_nr_class, tmp_label, tmp_start, tmp_count,
+		svm_group_classes(x, tmp_nr_class, tmp_label, tmp_start, tmp_count,
 				perm);
 
 		int nr_class = tmp_nr_class[0];

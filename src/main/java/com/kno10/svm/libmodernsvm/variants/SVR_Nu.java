@@ -3,6 +3,7 @@ package com.kno10.svm.libmodernsvm.variants;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.SVR_Q;
 
@@ -10,14 +11,17 @@ public class SVR_Nu<T> extends AbstractSVR<T> {
 	private static final Logger LOG = Logger.getLogger(SVR_Nu.class.getName());
 	protected double nu, C;
 
-	public SVR_Nu(double eps, int shrinking, double cache_size, double C, double nu) {
+	public SVR_Nu(double eps, int shrinking, double cache_size, double C,
+			double nu) {
 		super(eps, shrinking, cache_size);
 		this.nu = nu;
 		this.C = C;
 	}
 
 	@Override
-	protected Solver.SolutionInfo solve(int l, T[] x, double[] y_, KernelFunction<? super T> kernel_function) {
+	protected Solver.SolutionInfo solve(DataSet<T> x,
+			KernelFunction<? super T> kernel_function) {
+		final int l = x.size();
 		double[] alpha2 = new double[2 * l];
 		double[] linear_term = new double[2 * l];
 		byte[] y = new byte[2 * l];
@@ -34,8 +38,8 @@ public class SVR_Nu<T> extends AbstractSVR<T> {
 			y[i + l] = -1;
 		}
 
-		Solver.SolutionInfo si = new Solver_NU().solve(2 * l, new SVR_Q<T>(l,
-				x, kernel_function, cache_size), linear_term, y, alpha2, C, C,
+		Solver.SolutionInfo si = new Solver_NU().solve(2 * l, new SVR_Q<T>(x,
+				kernel_function, cache_size), linear_term, y, alpha2, C, C,
 				eps, shrinking);
 
 		if (LOG.isLoggable(Level.INFO)) {

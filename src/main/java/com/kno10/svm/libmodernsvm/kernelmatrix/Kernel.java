@@ -1,35 +1,32 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
-import com.kno10.svm.libmodernsvm.ArrayUtil;
-import com.kno10.svm.libmodernsvm.svm_node;
+import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.variants.QMatrix;
 
 public abstract class Kernel<T> implements QMatrix {
-	private Object[] x;
+	private DataSet<T> x;
 
 	private final Cache cache;
 
 	abstract public double[] get_QD();
 
 	public void swap_index(int i, int j) {
-		ArrayUtil.swap(x, i, j);
+		x.swap(i, j);
 		// Swap in cache, too:
 		cache.swap_index(i, j);
 	}
 
 	KernelFunction<? super T> kf;
 
-	@SuppressWarnings("unchecked")
 	double kernel_function(int i, int j) {
-		return kf.similarity((T) x[i], (T) x[j]);
+		return kf.similarity(x.get(i), x.get(j));
 	}
 
-	public Kernel(int l, T[] x_, KernelFunction<? super T> kf_,
-			double cache_size) {
-		kf = kf_;
-		x = (svm_node[][]) x_.clone();
-		cache = new Cache(l, (long) (cache_size * (1 << 20)));
+	public Kernel(DataSet<T> x, KernelFunction<? super T> kf, double cache_size) {
+		this.kf = kf;
+		this.x = x; // FIXME: need to copy?
+		cache = new Cache(x.size(), (long) (cache_size * (1 << 20)));
 	}
 
 	public float[] get_Q(int i, int len) {

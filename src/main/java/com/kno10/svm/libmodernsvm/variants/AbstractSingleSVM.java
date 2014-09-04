@@ -3,6 +3,7 @@ package com.kno10.svm.libmodernsvm.variants;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 
 public abstract class AbstractSingleSVM<T> {
@@ -20,13 +21,14 @@ public abstract class AbstractSingleSVM<T> {
 		this.cache_size = cache_size;
 	}
 
-	abstract protected Solver.SolutionInfo solve(int l, T[] x, double[] y,
+	abstract protected Solver.SolutionInfo solve(DataSet<T> x,
 			KernelFunction<? super T> kernel_function);
 
-	public void svm_train_one(int l, T[] x, double[] y,
+	public void svm_train_one(DataSet<T> x,
 			KernelFunction<? super T> kernel_function) {
+		final int l = x.size();
 		alpha = new double[l];
-		Solver.SolutionInfo si = solve(l, x, y, kernel_function);
+		Solver.SolutionInfo si = solve(x, kernel_function);
 		rho = si.rho;
 
 		if (getLogger().isLoggable(Level.INFO)) {
@@ -40,7 +42,7 @@ public abstract class AbstractSingleSVM<T> {
 		for (int i = 0; i < l; i++) {
 			if (Math.abs(alpha[i]) > 0) {
 				++nSV;
-				if (Math.abs(alpha[i]) >= ((y[i] > 0) ? si.upper_bound_p
+				if (Math.abs(alpha[i]) >= ((x.value(i) > 0) ? si.upper_bound_p
 						: si.upper_bound_n))
 					++nBSV;
 			}

@@ -1,9 +1,8 @@
 package com.kno10.svm.libmodernsvm.kernelfunction;
 
-import com.kno10.svm.libmodernsvm.svm_node;
 
-public abstract class AbstractKernelFunction implements KernelFunction<svm_node[]> {
-	protected static double dot(svm_node[] x, svm_node[] y)
+public abstract class AbstractKernelFunction implements KernelFunction<SparseVectorEntry[]> {
+	protected static double dot(SparseVectorEntry[] x, SparseVectorEntry[] y)
 	{
 		double sum = 0;
 		int xlen = x.length;

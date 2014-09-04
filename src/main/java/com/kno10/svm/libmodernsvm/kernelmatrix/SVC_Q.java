@@ -1,6 +1,7 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
 import com.kno10.svm.libmodernsvm.ArrayUtil;
+import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.variants.SVC_C;
 import com.kno10.svm.libmodernsvm.variants.SVC_Nu;
@@ -13,10 +14,10 @@ import com.kno10.svm.libmodernsvm.variants.SVC_Nu;
 public class SVC_Q<T> extends KernelWithQD<T> {
 	private final byte[] y;
 
-	public SVC_Q(int l, T[] x_, KernelFunction<? super T> kf_,
-			double cache_size, byte[] y_) {
-		super(l, x_, kf_, cache_size);
-		y = (byte[]) y_.clone();
+	public SVC_Q(DataSet<T> x, KernelFunction<? super T> kf, double cache_size,
+			byte[] y) {
+		super(x, kf, cache_size);
+		this.y = (byte[]) y.clone();
 	}
 
 	@Override
