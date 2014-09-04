@@ -1,7 +1,7 @@
 package com.kno10.svm.libmodernsvm;
-public class svm_problem implements java.io.Serializable
+public class svm_problem<T> implements java.io.Serializable
 {
 	public int l;
 	public double[] y;
-	public svm_node[][] x;
+	public T[] x;
 }

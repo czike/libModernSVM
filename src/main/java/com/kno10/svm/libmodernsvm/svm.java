@@ -4,8 +4,11 @@ import java.util.*;
 import java.util.logging.Logger;
 
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
+import com.kno10.svm.libmodernsvm.kernelmatrix.ONE_CLASS_Q;
+import com.kno10.svm.libmodernsvm.kernelmatrix.SVC_Q;
+import com.kno10.svm.libmodernsvm.kernelmatrix.SVR_Q;
 
-public class svm {
+public class svm<T> {
 	private static final Logger LOG = Logger.getLogger(svm.class.getName());
 	
 	//
@@ -14,7 +17,7 @@ public class svm {
 	public static final int LIBSVM_VERSION=318; 
 	public static final Random rand = new Random();
 
-	private static void solve_c_svc(svm_problem prob, svm_parameter param,
+	private static void solve_c_svc(svm_problem<svm_node[]> prob, svm_parameter param,
 					double[] alpha, Solver.SolutionInfo si,
 					double Cp, double Cn)
 	{
@@ -46,7 +49,7 @@ public class svm {
 			alpha[i] *= y[i];
 	}
 
-	private static void solve_nu_svc(svm_problem prob, svm_parameter param,
+	private static void solve_nu_svc(svm_problem<svm_node[]> prob, svm_parameter param,
 					double[] alpha, Solver.SolutionInfo si)
 	{
 		int i;
@@ -97,7 +100,7 @@ public class svm {
 		si.upper_bound_n = 1/r;
 	}
 
-	private static void solve_one_class(svm_problem prob, svm_parameter param,
+	private static void solve_one_class(svm_problem<svm_node[]> prob, svm_parameter param,
 					double[] alpha, Solver.SolutionInfo si)
 	{
 		int l = prob.l;
@@ -125,7 +128,7 @@ public class svm {
 			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
 	}
 
-	private static void solve_epsilon_svr(svm_problem prob, svm_parameter param,
+	private static void solve_epsilon_svr(svm_problem<svm_node[]> prob, svm_parameter param,
 					double[] alpha, Solver.SolutionInfo si)
 	{
 		int l = prob.l;
@@ -158,7 +161,7 @@ public class svm {
 		LOG.info("nu = "+sum_alpha/(param.C*l)+"\n");
 	}
 
-	private static void solve_nu_svr(svm_problem prob, svm_parameter param,
+	private static void solve_nu_svr(svm_problem<svm_node[]> prob, svm_parameter param,
 					double[] alpha, Solver.SolutionInfo si)
 	{
 		int l = prob.l;
@@ -201,7 +204,7 @@ public class svm {
 	};
 
 	static decision_function svm_train_one(
-		svm_problem prob, svm_parameter param,
+		svm_problem<svm_node[]> prob, svm_parameter param,
 		double Cp, double Cn)
 	{
 		double[] alpha = new double[prob.l];
@@ -441,7 +444,7 @@ public class svm {
 	}
 
 	// Cross-validation decision values for probability estimates
-	private static void svm_binary_svc_probability(svm_problem prob, svm_parameter param, double Cp, double Cn, double[] probAB)
+	private static void svm_binary_svc_probability(svm_problem<svm_node[]> prob, svm_parameter param, double Cp, double Cn, double[] probAB)
 	{
 		int i;
 		int nr_fold = 5;
@@ -453,14 +456,14 @@ public class svm {
 		for(i=0;i<prob.l;i++)
 		{
 			int j = i+rand.nextInt(prob.l-i);
-			do {int _=perm[i]; perm[i]=perm[j]; perm[j]=_;} while(false);
+			int tmp=perm[i]; perm[i]=perm[j]; perm[j]=tmp;
 		}
 		for(i=0;i<nr_fold;i++)
 		{
 			int begin = i*prob.l/nr_fold;
 			int end = (i+1)*prob.l/nr_fold;
 			int j,k;
-			svm_problem subprob = new svm_problem();
+			svm_problem<svm_node[]> subprob = new svm_problem<svm_node[]>();
 
 			subprob.l = prob.l-(end-begin);
 			subprob.x = new svm_node[subprob.l][];
@@ -507,7 +510,7 @@ public class svm {
 				subparam.weight_label[1]=-1;
 				subparam.weight[0]=Cp;
 				subparam.weight[1]=Cn;
-				svm_model submodel = svm_train(subprob,subparam);
+				svm_model<svm_node[]> submodel = svm_train(subprob,subparam);
 				for(j=begin;j<end;j++)
 				{
 					double[] dec_value=new double[1];
@@ -522,7 +525,7 @@ public class svm {
 	}
 
 	// Return parameter of a Laplace distribution 
-	private static double svm_svr_probability(svm_problem prob, svm_parameter param)
+	private static double svm_svr_probability(svm_problem<svm_node[]> prob, svm_parameter param)
 	{
 		int i;
 		int nr_fold = 5;
@@ -553,7 +556,7 @@ public class svm {
 
 	// label: label name, start: begin of each class, count: #data of classes, perm: indices to the original data
 	// perm, length l, must be allocated before calling this subroutine
-	private static void svm_group_classes(svm_problem prob, int[] nr_class_ret, int[][] label_ret, int[][] start_ret, int[][] count_ret, int[] perm)
+	private static void svm_group_classes(svm_problem<svm_node[]> prob, int[] nr_class_ret, int[][] label_ret, int[][] start_ret, int[][] count_ret, int[] perm)
 	{
 		int l = prob.l;
 		int max_nr_class = 16;
@@ -634,9 +637,9 @@ public class svm {
 	//
 	// Interface functions
 	//
-	public static svm_model svm_train(svm_problem prob, svm_parameter param)
+	public static svm_model<svm_node[]> svm_train(svm_problem<svm_node[]> prob, svm_parameter param)
 	{
-		svm_model model = new svm_model();
+		svm_model<svm_node[]> model = new svm_model<svm_node[]>();
 		model.param = param;
 
 		if(param.svm_type == svm_parameter.ONE_CLASS ||
@@ -740,7 +743,7 @@ public class svm {
 			for(i=0;i<nr_class;i++)
 				for(int j=i+1;j<nr_class;j++)
 				{
-					svm_problem sub_prob = new svm_problem();
+					svm_problem<svm_node[]> sub_prob = new svm_problem<svm_node[]>();
 					int si = start[i], sj = start[j];
 					int ci = count[i], cj = count[j];
 					sub_prob.l = ci+cj;
@@ -871,7 +874,7 @@ public class svm {
 	}
 	
 	// Stratified cross validation
-	public static void svm_cross_validation(svm_problem prob, svm_parameter param, int nr_fold, double[] target)
+	public static void svm_cross_validation(svm_problem<svm_node[]> prob, svm_parameter param, int nr_fold, double[] target)
 	{
 		int i;
 		int[] fold_start = new int[nr_fold+1];
@@ -947,7 +950,7 @@ public class svm {
 			int begin = fold_start[i];
 			int end = fold_start[i+1];
 			int j,k;
-			svm_problem subprob = new svm_problem();
+			svm_problem<svm_node[]> subprob = new svm_problem<svm_node[]>();
 
 			subprob.l = l-(end-begin);
 			subprob.x = new svm_node[subprob.l][];
@@ -966,7 +969,7 @@ public class svm {
 				subprob.y[k] = prob.y[perm[j]];
 				++k;
 			}
-			svm_model submodel = svm_train(subprob,param);
+			svm_model<svm_node[]> submodel = svm_train(subprob,param);
 			if(param.probability==1 &&
 			   (param.svm_type == svm_parameter.C_SVC ||
 			    param.svm_type == svm_parameter.NU_SVC))
@@ -981,36 +984,36 @@ public class svm {
 		}
 	}
 
-	public static int svm_get_svm_type(svm_model model)
+	public static int svm_get_svm_type(svm_model<svm_node[]> model)
 	{
 		return model.param.svm_type;
 	}
 
-	public static int svm_get_nr_class(svm_model model)
+	public static int svm_get_nr_class(svm_model<svm_node[]> model)
 	{
 		return model.nr_class;
 	}
 
-	public static void svm_get_labels(svm_model model, int[] label)
+	public static void svm_get_labels(svm_model<svm_node[]> model, int[] label)
 	{
 		if (model.label != null)
 			for(int i=0;i<model.nr_class;i++)
 				label[i] = model.label[i];
 	}
 
-	public static void svm_get_sv_indices(svm_model model, int[] indices)
+	public static void svm_get_sv_indices(svm_model<svm_node[]> model, int[] indices)
 	{
 		if (model.sv_indices != null)
 			for(int i=0;i<model.l;i++)
 				indices[i] = model.sv_indices[i];
 	}
 
-	public static int svm_get_nr_sv(svm_model model)
+	public static int svm_get_nr_sv(svm_model<svm_node[]> model)
 	{
 		return model.l;
 	}
 
-	public static double svm_get_svr_probability(svm_model model)
+	public static double svm_get_svr_probability(svm_model<svm_node[]> model)
 	{
 		if ((model.param.svm_type == svm_parameter.EPSILON_SVR || model.param.svm_type == svm_parameter.NU_SVR) &&
 		    model.probA!=null)
@@ -1022,7 +1025,7 @@ public class svm {
 		}
 	}
 
-	public static double svm_predict_values(svm_model model, svm_node[] x, double[] dec_values)
+	public static double svm_predict_values(svm_model<svm_node[]> model, svm_node[] x, double[] dec_values)
 	{
 		KernelFunction<svm_node[]> kf = model.param.makeKernelFunction();
 		int i;
@@ -1096,7 +1099,7 @@ public class svm {
 		}
 	}
 
-	public static double svm_predict(svm_model model, svm_node[] x)
+	public static double svm_predict(svm_model<svm_node[]> model, svm_node[] x)
 	{
 		int nr_class = model.nr_class;
 		double[] dec_values;
@@ -1110,7 +1113,7 @@ public class svm {
 		return pred_result;
 	}
 
-	public static double svm_predict_probability(svm_model model, svm_node[] x, double[] prob_estimates)
+	public static double svm_predict_probability(svm_model<svm_node[]> model, svm_node[] x, double[] prob_estimates)
 	{
 		if ((model.param.svm_type == svm_parameter.C_SVC || model.param.svm_type == svm_parameter.NU_SVC) &&
 		    model.probA!=null && model.probB!=null)
@@ -1153,7 +1156,7 @@ public class svm {
 		"linear","polynomial","rbf","sigmoid","precomputed"
 	};
 
-	public static void svm_save_model(String model_file_name, svm_model model) throws IOException
+	public static void svm_save_model(String model_file_name, svm_model<svm_node[]> model) throws IOException
 	{
 		DataOutputStream fp = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(model_file_name)));
 
@@ -1248,7 +1251,7 @@ public class svm {
 		return Integer.parseInt(s);
 	}
 
-	private static boolean read_model_header(BufferedReader fp, svm_model model)
+	private static boolean read_model_header(BufferedReader fp, svm_model<svm_node[]> model)
 	{
 		svm_parameter param = new svm_parameter();
 		model.param = param;
@@ -1361,16 +1364,16 @@ public class svm {
 		return true;
 	}
 
-	public static svm_model svm_load_model(String model_file_name) throws IOException
+	public static svm_model<svm_node[]> svm_load_model(String model_file_name) throws IOException
 	{
 		return svm_load_model(new BufferedReader(new FileReader(model_file_name)));
 	}
 
-	public static svm_model svm_load_model(BufferedReader fp) throws IOException
+	public static svm_model<svm_node[]> svm_load_model(BufferedReader fp) throws IOException
 	{
 		// read parameters
 
-		svm_model model = new svm_model();
+		svm_model<svm_node[]> model = new svm_model<svm_node[]>();
 		model.rho = null;
 		model.probA = null;
 		model.probB = null;
@@ -1411,7 +1414,7 @@ public class svm {
 		return model;
 	}
 
-	public static String svm_check_parameter(svm_problem prob, svm_parameter param)
+	public static String svm_check_parameter(svm_problem<svm_node[]> prob, svm_parameter param)
 	{
 		// svm_type
 
@@ -1531,7 +1534,7 @@ public class svm {
 		return null;
 	}
 
-	public static int svm_check_probability_model(svm_model model)
+	public static int svm_check_probability_model(svm_model<svm_node[]> model)
 	{
 		if (((model.param.svm_type == svm_parameter.C_SVC || model.param.svm_type == svm_parameter.NU_SVC) &&
 		model.probA!=null && model.probB!=null) ||

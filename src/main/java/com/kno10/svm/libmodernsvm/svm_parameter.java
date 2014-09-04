@@ -50,15 +50,15 @@ public class svm_parameter implements Cloneable, java.io.Serializable {
 
 	public KernelFunction<svm_node[]> makeKernelFunction() {
 		switch (kernel_type) {
-		case svm_parameter.LINEAR:
+		case LINEAR:
 			return new LinearKernelFunction();
-		case svm_parameter.POLY:
+		case POLY:
 			return new PolynomialKernelFunction(degree, gamma, coef0);
-		case svm_parameter.RBF:
+		case RBF:
 			return new RadialBasisKernelFunction(gamma);
-		case svm_parameter.SIGMOID:
+		case SIGMOID:
 			return new SigmoidKernelFunction(gamma, coef0);
-		case svm_parameter.PRECOMPUTED:
+		case PRECOMPUTED:
 			throw new RuntimeException("Incomplete support");
 		default:
 			throw new RuntimeException("Unknown kernel type: " + kernel_type);

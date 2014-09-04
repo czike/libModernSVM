@@ -1,4 +1,4 @@
-package com.kno10.svm.libmodernsvm;
+package com.kno10.svm.libmodernsvm.kernelmatrix;
 
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 

@@ -1,5 +1,7 @@
-package com.kno10.svm.libmodernsvm;
+package com.kno10.svm.libmodernsvm.kernelmatrix;
 
+import com.kno10.svm.libmodernsvm.QMatrix;
+import com.kno10.svm.libmodernsvm.svm_node;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 
 public abstract class Kernel<T> implements QMatrix {
