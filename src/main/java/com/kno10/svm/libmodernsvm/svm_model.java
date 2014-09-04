@@ -1,7 +1,7 @@
 //
 // svm_model
 //
-package libsvm;
+package com.kno10.svm.libmodernsvm;
 public class svm_model implements java.io.Serializable
 {
 	public svm_parameter param;	// parameter

@@ -1,4 +1,4 @@
-package libsvm;
+package com.kno10.svm.libmodernsvm;
 public class svm_parameter implements Cloneable,java.io.Serializable
 {
 	/* svm_type */
@@ -33,6 +33,7 @@ public class svm_parameter implements Cloneable,java.io.Serializable
 	public int shrinking;	// use the shrinking heuristics
 	public int probability; // do probability estimates
 
+	@Override
 	public Object clone() 
 	{
 		try 
