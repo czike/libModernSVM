@@ -1,0 +1,10 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.kno10.svm.libmodernsvm</groupId>
+  <artifactId>libModernSVM</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>Modern SVM for Java</name>
+  <description>Modernized version of the popular libSVM library.
+
+The Java version published as part of libSVM is a literal port of C code to Java. This yields a number of inefficiencies (in particular memory use). This projects aims at making the code easier to reuse and reduce such cost.</description>
+</project>
