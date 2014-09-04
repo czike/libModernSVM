@@ -2,6 +2,9 @@ package com.kno10.svm.libmodernsvm.kernelfunction;
 
 import com.kno10.svm.libmodernsvm.svm_node;
 
+/**
+ * Sigmoid kernel.
+ */
 public class SigmoidKernelFunction extends AbstractKernelFunction {
 	private final double gamma;
 	private final double coef0;
@@ -12,7 +15,7 @@ public class SigmoidKernelFunction extends AbstractKernelFunction {
 		this.coef0 = coef0;
 	}
 
-	public double kernel_function(svm_node[] i, svm_node[] j) {
-		return Math.tanh(gamma*dot(i,j)+coef0);
+	public double similarity(svm_node[] x, svm_node[] y) {
+		return Math.tanh(gamma*dot(x,y)+coef0);
 	}
 }

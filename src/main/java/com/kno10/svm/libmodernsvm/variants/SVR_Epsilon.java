@@ -6,20 +6,20 @@ import java.util.logging.Logger;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.SVR_Q;
 
-public class SVR_Epsilon<T> extends AbstractSingleSVM<T> {
+public class SVR_Epsilon<T> extends AbstractSVR<T> {
 	private static final Logger LOG = Logger.getLogger(SVR_Epsilon.class
 			.getName());
 	protected double p, C;
 
-	public SVR_Epsilon(double eps, int shrinking, double cache_size,
-			KernelFunction<? super T> kernel_function, double C, double p) {
-		super(eps, shrinking, cache_size, kernel_function);
+	public SVR_Epsilon(double eps, int shrinking, double cache_size,double C, double p) {
+		super(eps, shrinking, cache_size);
 		this.p = p;
 		this.C = C;
 	}
 
 	@Override
-	protected Solver.SolutionInfo solve(int l, T[] x, double[] y_) {
+	protected Solver.SolutionInfo solve(int l, T[] x, double[] y_, 
+			KernelFunction<? super T> kernel_function) {
 		double[] alpha2 = new double[2 * l];
 		double[] linear_term = new double[2 * l];
 		byte[] y = new byte[2 * l];

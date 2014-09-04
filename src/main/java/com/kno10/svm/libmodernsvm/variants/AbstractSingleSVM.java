@@ -9,25 +9,24 @@ public abstract class AbstractSingleSVM<T> {
 	protected double eps;
 	protected int shrinking;
 	protected double cache_size;
-	protected KernelFunction<? super T> kernel_function;
 
 	// Output variables
 	public double[] alpha;
 	public double rho;
 
-	public AbstractSingleSVM(double eps, int shrinking, double cache_size,
-			KernelFunction<? super T> kernel_function) {
+	public AbstractSingleSVM(double eps, int shrinking, double cache_size) {
 		this.eps = eps;
 		this.shrinking = shrinking;
 		this.cache_size = cache_size;
-		this.kernel_function = kernel_function;
 	}
 
-	abstract protected Solver.SolutionInfo solve(int l, T[] x, double[] y);
+	abstract protected Solver.SolutionInfo solve(int l, T[] x, double[] y,
+			KernelFunction<? super T> kernel_function);
 
-	public void svm_train_one(int l, T[] x, double[] y) {
+	public void svm_train_one(int l, T[] x, double[] y,
+			KernelFunction<? super T> kernel_function) {
 		alpha = new double[l];
-		Solver.SolutionInfo si = solve(l, x, y);
+		Solver.SolutionInfo si = solve(l, x, y, kernel_function);
 		rho = si.rho;
 
 		if (getLogger().isLoggable(Level.INFO)) {

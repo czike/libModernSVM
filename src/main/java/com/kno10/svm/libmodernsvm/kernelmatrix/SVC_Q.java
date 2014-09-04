@@ -1,10 +1,14 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
+import com.kno10.svm.libmodernsvm.variants.SVM_C;
+import com.kno10.svm.libmodernsvm.variants.SVM_Nu;
 
-//
-// Q matrices for various formulations
-//
+/**
+ * Q matrix used by {@link SVM_C} and {@link SVM_Nu} classification.
+ *
+ * @param <T>
+ */
 public class SVC_Q<T> extends KernelWithQD<T> {
 	private final byte[] y;
 

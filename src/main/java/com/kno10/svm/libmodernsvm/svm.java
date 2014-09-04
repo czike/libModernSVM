@@ -375,6 +375,7 @@ public class svm<T> {
 			svm_parameter param) {
 		svm_model<svm_node[]> model = new svm_model<svm_node[]>();
 		model.param = param;
+		KernelFunction<svm_node[]> kf = param.makeKernelFunction();
 
 		if (param.svm_type == svm_parameter.ONE_CLASS
 				|| param.svm_type == svm_parameter.EPSILON_SVR
@@ -395,7 +396,7 @@ public class svm<T> {
 
 			AbstractSingleSVM<svm_node[]> svm = param.makeSVM(0, 0);
 
-			svm.svm_train_one(prob.l, prob.x, prob.y);
+			svm.svm_train_one(prob.l, prob.x, prob.y, kf);
 			model.rho = new double[1];
 			model.rho[0] = svm.rho;
 
@@ -461,21 +462,22 @@ public class svm<T> {
 			boolean[] nonzero = new boolean[l];
 			for (int i = 0; i < l; i++)
 				nonzero[i] = false;
-			double[][] f_alpha = new double[nr_class * (nr_class - 1) / 2][];
-			double[] f_rho = new double[nr_class * (nr_class - 1) / 2];
+			final int pairs = nr_class * (nr_class - 1) / 2;
+			double[][] f_alpha = new double[pairs][];
+			double[] f_rho = new double[pairs];
 
 			double[] probA = null, probB = null;
 			if (param.probability == 1) {
-				probA = new double[nr_class * (nr_class - 1) / 2];
-				probB = new double[nr_class * (nr_class - 1) / 2];
+				probA = new double[pairs];
+				probB = new double[pairs];
 			}
 
 			int p = 0;
 			for (int i = 0; i < nr_class; i++)
 				for (int j = i + 1; j < nr_class; j++) {
 					svm_problem<svm_node[]> sub_prob = new svm_problem<svm_node[]>();
-					int si = start[i], sj = start[j];
-					int ci = count[i], cj = count[j];
+					final int si = start[i], sj = start[j];
+					final int ci = count[i], cj = count[j];
 					sub_prob.l = ci + cj;
 					sub_prob.x = new svm_node[sub_prob.l][];
 					sub_prob.y = new double[sub_prob.l];
@@ -498,7 +500,7 @@ public class svm<T> {
 
 					AbstractSingleSVM<svm_node[]> svm = param.makeSVM(
 							weighted_C[i], weighted_C[j]);
-					svm.svm_train_one(sub_prob.l, sub_prob.x, sub_prob.y);
+					svm.svm_train_one(sub_prob.l, sub_prob.x, sub_prob.y, kf);
 					f_alpha[p] = svm.alpha;
 					f_rho[p] = svm.rho;
 					for (int k = 0; k < ci; k++)
@@ -519,14 +521,14 @@ public class svm<T> {
 			for (int i = 0; i < nr_class; i++)
 				model.label[i] = label[i];
 
-			model.rho = new double[nr_class * (nr_class - 1) / 2];
-			for (int i = 0; i < nr_class * (nr_class - 1) / 2; i++)
+			model.rho = new double[pairs];
+			for (int i = 0; i < pairs; i++)
 				model.rho[i] = f_rho[i];
 
 			if (param.probability == 1) {
-				model.probA = new double[nr_class * (nr_class - 1) / 2];
-				model.probB = new double[nr_class * (nr_class - 1) / 2];
-				for (int i = 0; i < nr_class * (nr_class - 1) / 2; i++) {
+				model.probA = new double[pairs];
+				model.probB = new double[pairs];
+				for (int i = 0; i < pairs; i++) {
 					model.probA[i] = probA[i];
 					model.probB[i] = probB[i];
 				}
@@ -714,7 +716,7 @@ public class svm<T> {
 			double[] sv_coef = model.sv_coef[0];
 			double sum = 0;
 			for (int i = 0; i < model.l; i++)
-				sum += sv_coef[i] * kf.kernel_function(x, model.SV[i]);
+				sum += sv_coef[i] * kf.similarity(x, model.SV[i]);
 			sum -= model.rho[0];
 			dec_values[0] = sum;
 
@@ -728,7 +730,7 @@ public class svm<T> {
 
 			double[] kvalue = new double[l];
 			for (int i = 0; i < l; i++)
-				kvalue[i] = kf.kernel_function(x, model.SV[i]);
+				kvalue[i] = kf.similarity(x, model.SV[i]);
 
 			int[] start = new int[nr_class];
 			start[0] = 0;

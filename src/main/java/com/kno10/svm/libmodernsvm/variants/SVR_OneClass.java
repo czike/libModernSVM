@@ -5,23 +5,28 @@ import java.util.logging.Logger;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.ONE_CLASS_Q;
 
-public class SVM_OneClass<T> extends AbstractSingleSVM<T> {
-	private static final Logger LOG = Logger.getLogger(SVM_OneClass.class
+/**
+ * One-class classification is similar to regression.
+ *
+ * @param <T>
+ */
+public class SVR_OneClass<T> extends AbstractSVR<T> {
+	private static final Logger LOG = Logger.getLogger(SVR_OneClass.class
 			.getName());
 	protected double nu;
 
-	public SVM_OneClass(double eps, int shrinking, double cache_size,
-			KernelFunction<? super T> kernel_function, double nu) {
-		super(eps, shrinking, cache_size, kernel_function);
+	public SVR_OneClass(double eps, int shrinking, double cache_size, double nu) {
+		super(eps, shrinking, cache_size);
 		this.nu = nu;
 	}
 
 	@Override
-	protected Solver.SolutionInfo solve(int l, T[] x, double[] y) {
+	protected Solver.SolutionInfo solve(int l, T[] x, double[] y, 
+			KernelFunction<? super T> kernel_function) {
 		double[] zeros = new double[l];
 		byte[] ones = new byte[l];
 
-		int n = (int) (nu * l); // # of alpha's at upper bound
+		final int n = (int) (nu * l); // # of alpha's at upper bound
 
 		for (int i = 0; i < n; i++) {
 			alpha[i] = 1;

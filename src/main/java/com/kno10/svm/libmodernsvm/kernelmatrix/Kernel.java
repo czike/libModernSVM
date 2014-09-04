@@ -24,7 +24,7 @@ public abstract class Kernel<T> implements QMatrix {
 
 	@SuppressWarnings("unchecked")
 	double kernel_function(int i, int j) {
-		return kf.kernel_function((T) x[i], (T) x[j]);
+		return kf.similarity((T) x[i], (T) x[j]);
 	}
 
 	public Kernel(int l, T[] x_, KernelFunction<? super T> kf_,

@@ -11,14 +11,14 @@ public class SVM_Nu<T> extends AbstractSingleSVM<T> {
 
 	protected double nu;
 
-	public SVM_Nu(double eps, int shrinking, double cache_size,
-			KernelFunction<? super T> kernel_function, double nu) {
-		super(eps, shrinking, cache_size, kernel_function);
+	public SVM_Nu(double eps, int shrinking, double cache_size, double nu) {
+		super(eps, shrinking, cache_size);
 		this.nu = nu;
 	}
 
 	@Override
-	protected Solver.SolutionInfo solve(int l, T[] x, double[] y_) {
+	protected Solver.SolutionInfo solve(int l, T[] x, double[] y_,
+			KernelFunction<? super T> kernel_function) {
 		byte[] y = new byte[l];
 		for (int i = 0; i < l; i++) {
 			y[i] = (byte) ((y_[i] > 0) ? +1 : -1);

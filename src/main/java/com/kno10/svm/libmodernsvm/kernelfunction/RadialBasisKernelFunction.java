@@ -2,6 +2,9 @@ package com.kno10.svm.libmodernsvm.kernelfunction;
 
 import com.kno10.svm.libmodernsvm.svm_node;
 
+/**
+ * Radial basis function (RBF) kernel. 
+ */
 public class RadialBasisKernelFunction extends AbstractKernelFunction {
 	double gamma;
 
@@ -10,7 +13,7 @@ public class RadialBasisKernelFunction extends AbstractKernelFunction {
 		this.gamma = gamma;
 	}
 
-	public double kernel_function(svm_node[] x, svm_node[] y) {
+	public double similarity(svm_node[] x, svm_node[] y) {
 		double sum = 0;
 		final int xlen = x.length, ylen = y.length;
 		int i = 0, j = 0;
