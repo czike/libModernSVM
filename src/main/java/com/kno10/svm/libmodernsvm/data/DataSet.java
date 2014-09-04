@@ -62,4 +62,9 @@ public interface DataSet<T> {
 	 *            Weight value
 	 */
 	void add(T v, double weight);
+	
+	/**
+	 * Reset the data set.
+	 */
+	void clear();
 }

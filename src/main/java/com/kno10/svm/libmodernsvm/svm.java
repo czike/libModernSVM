@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import com.kno10.svm.libmodernsvm.data.ByteWeightedArrayDataSet;
 import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.data.DoubleWeightedArrayDataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
@@ -137,24 +138,14 @@ public class svm<T> {
 			KernelFunction<? super T> kf, double Cp, double Cn, double[] probAB) {
 		final int l = x.size();
 		int nr_fold = 5;
-		int[] perm = new int[l];
+		int[] perm = shuffledIndex(new int[l], l);
 		double[] dec_values = new double[l];
-
-		// random shuffle
-		for (int i = 0; i < l; i++)
-			perm[i] = i;
-		for (int i = 0; i < l; i++) {
-			int j = i + rand.nextInt(l - i);
-			ArrayUtil.swap(perm, i, j);
-		}
+		DataSet<T> newx = new ByteWeightedArrayDataSet<T>(l);
 		for (int i = 0; i < nr_fold; i++) {
 			int begin = i * l / nr_fold;
 			int end = (i + 1) * l / nr_fold;
 
-			int newl = l - (end - begin);
-			// FIXME: classification instead of regression?
-			DataSet<T> newx = new DoubleWeightedArrayDataSet<T>(newl);
-
+			newx.clear();
 			for (int j = 0; j < begin; j++) {
 				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
@@ -162,7 +153,7 @@ public class svm<T> {
 				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
 			int p_count = 0, n_count = 0;
-			for (int j = 0; j < newl; j++)
+			for (int j = 0; j < newx.size(); j++)
 				if (newx.value(j) > 0)
 					p_count++;
 				else
@@ -349,18 +340,18 @@ public class svm<T> {
 		double[] probA = probability ? new double[pairs] : null;
 		double[] probB = probability ? new double[pairs] : null;
 
+		DataSet<T> newx = new ByteWeightedArrayDataSet<T>(l * 2 / nr_class);
 		int p = 0;
 		for (int i = 0; i < nr_class; i++) {
 			for (int j = i + 1; j < nr_class; j++) {
 				final int si = start[i], sj = start[j];
 				final int ci = count[i], cj = count[j];
-				int newl = ci + cj;
-				DataSet<T> newx = new DoubleWeightedArrayDataSet<T>(newl);
-				for (int k = 0; k < ci; k++) {
-					newx.add(x.get(perm[si + k]), +1);
+				newx.clear();
+				for (int k = 0, m = si; k < ci; ++k, ++m) {
+					newx.add(x.get(perm[m]), +1);
 				}
-				for (int k = 0; k < cj; k++) {
-					newx.add(x.get(perm[sj + k]), -1);
+				for (int k = 0, m = sj; k < cj; ++k, ++m) {
+					newx.add(x.get(perm[m]), -1);
 				}
 
 				if (probability) {
@@ -496,8 +487,10 @@ public class svm<T> {
 	/**
 	 * Build a shuffled index array.
 	 * 
-	 * @param perm Array storing the permutation
-	 * @param l Size
+	 * @param perm
+	 *            Array storing the permutation
+	 * @param l
+	 *            Size
 	 */
 	public static int[] shuffledIndex(int[] perm, int l) {
 		// Shuffle data set.
@@ -529,20 +522,18 @@ public class svm<T> {
 				fold_start[i] = i * l / nr_fold;
 		}
 
+		DoubleWeightedArrayDataSet<T> newx = new DoubleWeightedArrayDataSet<T>(
+				l);
 		for (int i = 0; i < nr_fold; i++) {
 			int begin = fold_start[i];
 			int end = fold_start[i + 1];
 
 			final int newl = l - (end - begin);
-			DoubleWeightedArrayDataSet<T> newx = new DoubleWeightedArrayDataSet<T>(
-					newl);
-			double[] newy = new double[newl];
-
-			int k = 0;
-			for (int j = 0; j < begin; ++j, ++k) {
+			newx.clear();
+			for (int j = 0; j < begin; ++j) {
 				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
-			for (int j = end; j < l; ++j, ++k) {
+			for (int j = end; j < l; ++j) {
 				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
 			ClassificationModel<T> submodel = svm_train_classification(newx,

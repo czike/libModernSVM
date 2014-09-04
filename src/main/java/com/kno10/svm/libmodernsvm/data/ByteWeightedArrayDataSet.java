@@ -10,14 +10,14 @@ import java.util.Arrays;
  * @param <T>
  *            Object type
  */
-public class DoubleWeightedArrayDataSet<T> implements DataSet<T> {
+public class ByteWeightedArrayDataSet<T> implements DataSet<T> {
 	Object[] data;
-	double[] weight;
+	byte[] weight;
 	int size = 0;
 
-	public DoubleWeightedArrayDataSet(int size) {
+	public ByteWeightedArrayDataSet(int size) {
 		data = new Object[size];
-		weight = new double[size];
+		weight = new byte[size];
 	}
 
 	public int size() {
@@ -42,12 +42,16 @@ public class DoubleWeightedArrayDataSet<T> implements DataSet<T> {
 		Object tmp = data[i];
 		data[i] = data[j];
 		data[j] = tmp;
-		double dt = weight[i];
+		byte dt = weight[i];
 		weight[i] = weight[j];
 		weight[j] = dt;
 	}
 
 	public void add(T v, double w) {
+		add(v, (byte) w);
+	}
+
+	public void add(T v, byte w) {
 		if (size == data.length) {
 			final int newlen = data.length << 1;
 			data = Arrays.copyOf(data, newlen);
