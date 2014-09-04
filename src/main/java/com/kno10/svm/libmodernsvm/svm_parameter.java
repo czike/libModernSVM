@@ -1,5 +1,11 @@
 package com.kno10.svm.libmodernsvm;
 
+import com.kno10.svm.libmodernsvm.svm.AbstractSVM;
+import com.kno10.svm.libmodernsvm.svm.SVM_C;
+import com.kno10.svm.libmodernsvm.svm.SVM_Nu;
+import com.kno10.svm.libmodernsvm.svm.SVM_OneClass;
+import com.kno10.svm.libmodernsvm.svm.SVR_Epsilon;
+import com.kno10.svm.libmodernsvm.svm.SVR_Nu;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelfunction.LinearKernelFunction;
 import com.kno10.svm.libmodernsvm.kernelfunction.PolynomialKernelFunction;
@@ -46,6 +52,27 @@ public class svm_parameter implements Cloneable, java.io.Serializable {
 		} catch (CloneNotSupportedException e) {
 			return null;
 		}
+	}
+
+	public AbstractSVM<svm_node[]> makeSVM(double Cp, double Cn) {
+		switch (svm_type) {
+		case svm_parameter.C_SVC:
+			return new SVM_C<svm_node[]>(eps, shrinking, cache_size,
+					makeKernelFunction(), Cp, Cn);
+		case svm_parameter.NU_SVC:
+			return new SVM_Nu<svm_node[]>(eps, shrinking, cache_size,
+					makeKernelFunction(), nu);
+		case svm_parameter.ONE_CLASS:
+			return new SVM_OneClass<svm_node[]>(eps, shrinking, cache_size,
+					makeKernelFunction(), nu);
+		case svm_parameter.EPSILON_SVR:
+			return new SVR_Epsilon<svm_node[]>(eps, shrinking, cache_size,
+					makeKernelFunction(), C, p);
+		case svm_parameter.NU_SVR:
+			return new SVR_Nu<svm_node[]>(eps, shrinking, cache_size,
+					makeKernelFunction(), C, nu);
+		}
+		throw new RuntimeException("Unknown SVM type");
 	}
 
 	public KernelFunction<svm_node[]> makeKernelFunction() {
