@@ -1,5 +1,7 @@
 package com.kno10.svm.libmodernsvm;
 
+import java.util.logging.Logger;
+
 // An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
 // Solves:
 //
@@ -19,6 +21,8 @@ package com.kno10.svm.libmodernsvm;
 // solution will be put in \alpha, objective value will be put in obj
 //
 class Solver {
+	private static final Logger LOG = Logger.getLogger(Solver.class.getName());
+	
 	int active_size;
 	byte[] y;
 	double[] G;		// gradient of objective function
@@ -94,7 +98,7 @@ class Solver {
 				nr_free++;
 
 		if(2*nr_free < active_size)
-			svm.info("\nWARNING: using -h 0 may be faster\n");
+			LOG.info("\nWARNING: using -h 0 may be faster\n");
 
 		if (nr_free*l > 2*active_size*(l-active_size))
 		{
@@ -187,7 +191,7 @@ class Solver {
 			{
 				counter = Math.min(l,1000);
 				if(shrinking!=0) do_shrinking();
-				svm.info(".");
+				LOG.info(".");
 			}
 
 			if(select_working_set(working_set)!=0)
@@ -196,7 +200,7 @@ class Solver {
 				reconstruct_gradient();
 				// reset active set size and check
 				active_size = l;
-				svm.info("*");
+				LOG.info("*");
 				if(select_working_set(working_set)!=0)
 					break;
 				else
@@ -356,7 +360,7 @@ class Solver {
 				// reconstruct the whole gradient to calculate objective value
 				reconstruct_gradient();
 				active_size = l;
-				svm.info("*");
+				LOG.info("*");
 			}
 			System.err.print("\nWARNING: reaching max number of iterations\n");
 		}
@@ -384,7 +388,7 @@ class Solver {
 		si.upper_bound_p = Cp;
 		si.upper_bound_n = Cn;
 
-		svm.info("\noptimization finished, #iter = "+iter+"\n");
+		LOG.info("\noptimization finished, #iter = "+iter+"\n");
 	}
 
 	// return 1 if already optimal, return 0 otherwise

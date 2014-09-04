@@ -1,29 +1,16 @@
 package com.kno10.svm.libmodernsvm;
 import java.io.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class svm {
+	private static final Logger LOG = Logger.getLogger(svm.class.getName());
+	
 	//
 	// construct and solve various formulations
 	//
 	public static final int LIBSVM_VERSION=318; 
 	public static final Random rand = new Random();
-
-	private static svm_print_interface svm_print_stdout = new svm_print_interface()
-	{
-		public void print(String s)
-		{
-			System.out.print(s);
-			System.out.flush();
-		}
-	};
-
-	private static svm_print_interface svm_print_string = svm_print_stdout;
-
-	static void info(String s) 
-	{
-		svm_print_string.print(s);
-	}
 
 	private static void solve_c_svc(svm_problem prob, svm_parameter param,
 					double[] alpha, Solver.SolutionInfo si,
@@ -51,7 +38,7 @@ public class svm {
 			sum_alpha += alpha[i];
 
 		if (Cp==Cn)
-			svm.info("nu = "+sum_alpha/(Cp*prob.l)+"\n");
+			LOG.info("nu = "+sum_alpha/(Cp*prob.l)+"\n");
 
 		for(i=0;i<l;i++)
 			alpha[i] *= y[i];
@@ -97,7 +84,7 @@ public class svm {
 			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
 		double r = si.r;
 
-		svm.info("C = "+1/r+"\n");
+		LOG.info("C = "+1/r+"\n");
 
 		for(i=0;i<l;i++)
 			alpha[i] *= y[i]/r;
@@ -166,7 +153,7 @@ public class svm {
 			alpha[i] = alpha2[i] - alpha2[i+l];
 			sum_alpha += Math.abs(alpha[i]);
 		}
-		svm.info("nu = "+sum_alpha/(param.C*l)+"\n");
+		LOG.info("nu = "+sum_alpha/(param.C*l)+"\n");
 	}
 
 	private static void solve_nu_svr(svm_problem prob, svm_parameter param,
@@ -196,7 +183,7 @@ public class svm {
 		s.Solve(2*l, new SVR_Q(prob,param), linear_term, y,
 			alpha2, C, C, param.eps, si, param.shrinking);
 
-		svm.info("epsilon = "+(-si.r)+"\n");
+		LOG.info("epsilon = "+(-si.r)+"\n");
 		
 		for(i=0;i<l;i++)
 			alpha[i] = alpha2[i] - alpha2[i+l];
@@ -236,7 +223,7 @@ public class svm {
 				break;
 		}
 
-		svm.info("obj = "+si.obj+", rho = "+si.rho+"\n");
+		LOG.info("obj = "+si.obj+", rho = "+si.rho+"\n");
 
 		// output SVs
 
@@ -260,7 +247,7 @@ public class svm {
 			}
 		}
 
-		svm.info("nSV = "+nSV+", nBSV = "+nBSV+"\n");
+		LOG.info("nSV = "+nSV+", nBSV = "+nBSV+"\n");
 
 		decision_function f = new decision_function();
 		f.alpha = alpha;
@@ -372,13 +359,13 @@ public class svm {
 			
 			if (stepsize < min_step)
 			{
-				svm.info("Line search fails in two-class probability estimates\n");
+				LOG.info("Line search fails in two-class probability estimates\n");
 				break;
 			}
 		}
 		
 		if (iter>=max_iter)
-			svm.info("Reaching maximal iterations in two-class probability estimates\n");
+			LOG.info("Reaching maximal iterations in two-class probability estimates\n");
 		probAB[0]=A;probAB[1]=B;
 	}
 
@@ -448,7 +435,7 @@ public class svm {
 			}
 		}
 		if (iter>=max_iter)
-			svm.info("Exceeds max_iter in multiclass_prob\n");
+			LOG.info("Exceeds max_iter in multiclass_prob\n");
 	}
 
 	// Cross-validation decision values for probability estimates
@@ -558,7 +545,7 @@ public class svm {
 			else 
 				mae+=Math.abs(ymv[i]);
 		mae /= (prob.l-count);
-		svm.info("Prob. model for test data: target value = predicted value + z,\nz: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma="+mae+"\n");
+		LOG.info("Prob. model for test data: target value = predicted value + z,\nz: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma="+mae+"\n");
 		return mae;
 	}
 
@@ -709,7 +696,7 @@ public class svm {
 			int[] count = tmp_count[0];
  			
 			if(nr_class == 1) 
-				svm.info("WARNING: training data in only one class. See README for details.\n");
+				LOG.info("WARNING: training data in only one class. See README for details.\n");
 			
 			svm_node[][] x = new svm_node[l][];
 			int i;
@@ -831,7 +818,7 @@ public class svm {
 				nz_count[i] = nSV;
 			}
 
-			svm.info("Total nSV = "+nnz+"\n");
+			LOG.info("Total nSV = "+nnz+"\n");
 
 			model.l = nnz;
 			model.SV = new svm_node[nnz][];
@@ -1550,13 +1537,5 @@ public class svm {
 			return 1;
 		else
 			return 0;
-	}
-
-	public static void svm_set_print_string_function(svm_print_interface print_func)
-	{
-		if (print_func == null)
-			svm_print_string = svm_print_stdout;
-		else 
-			svm_print_string = print_func;
 	}
 }
