@@ -248,7 +248,8 @@ public class svm<T> {
 				svm_model<svm_node[]> submodel = svm_train(subprob, subparam);
 				for (int j = begin; j < end; j++) {
 					double[] dec_value = new double[1];
-					svm_predict_values(submodel, prob.x[perm[j]], dec_value);
+					svm_predict_values(param, submodel, prob.x[perm[j]],
+							dec_value);
 					dec_values[perm[j]] = dec_value[0];
 					// ensure +1 -1 order; reason not using CV subroutine
 					dec_values[perm[j]] *= submodel.label[0];
@@ -334,7 +335,7 @@ public class svm<T> {
 		//
 		if (nr_class == 2 && label[0] == -1 && label[1] == +1) {
 			ArrayUtil.swap(label, 0, 1);
-			ArrayUtil.swap(count,0,1);
+			ArrayUtil.swap(count, 0, 1);
 			for (int i = 0; i < l; i++) {
 				data_label[i] = (data_label[i] == 0) ? 1 : 0;
 			}
@@ -364,7 +365,6 @@ public class svm<T> {
 	public static svm_model<svm_node[]> svm_train(svm_problem<svm_node[]> prob,
 			svm_parameter param) {
 		svm_model<svm_node[]> model = new svm_model<svm_node[]>();
-		model.param = param;
 		KernelFunction<svm_node[]> kf = param.makeKernelFunction();
 
 		if (param.svm_type == svm_parameter.ONE_CLASS
@@ -645,7 +645,7 @@ public class svm<T> {
 				perm[i] = i;
 			for (int i = 0; i < l; i++) {
 				int j = i + rand.nextInt(l - i);
-				ArrayUtil.swap(perm, i,j);
+				ArrayUtil.swap(perm, i, j);
 			}
 			for (int i = 0; i <= nr_fold; i++)
 				fold_start[i] = i * l / nr_fold;
@@ -675,16 +675,18 @@ public class svm<T> {
 				double[] prob_estimates = new double[submodel
 						.svm_get_nr_class()];
 				for (int j = begin; j < end; j++)
-					target[perm[j]] = svm_predict_probability(submodel,
+					target[perm[j]] = svm_predict_probability(param, submodel,
 							prob.x[perm[j]], prob_estimates);
 			} else
 				for (int j = begin; j < end; j++)
-					target[perm[j]] = svm_predict(submodel, prob.x[perm[j]]);
+					target[perm[j]] = svm_predict(param, submodel,
+							prob.x[perm[j]]);
 		}
 	}
 
-	public static double svm_get_svr_probability(svm_model<svm_node[]> model) {
-		if ((model.param.svm_type == svm_parameter.EPSILON_SVR || model.param.svm_type == svm_parameter.NU_SVR)
+	public static double svm_get_svr_probability(svm_parameter param,
+			svm_model<svm_node[]> model) {
+		if ((param.svm_type == svm_parameter.EPSILON_SVR || param.svm_type == svm_parameter.NU_SVR)
 				&& model.probA != null)
 			return model.probA[0];
 		else {
@@ -693,12 +695,12 @@ public class svm<T> {
 		}
 	}
 
-	public static double svm_predict_values(svm_model<svm_node[]> model,
-			svm_node[] x, double[] dec_values) {
-		KernelFunction<svm_node[]> kf = model.param.makeKernelFunction();
-		if (model.param.svm_type == svm_parameter.ONE_CLASS
-				|| model.param.svm_type == svm_parameter.EPSILON_SVR
-				|| model.param.svm_type == svm_parameter.NU_SVR) {
+	public static double svm_predict_values(svm_parameter param,
+			svm_model<svm_node[]> model, svm_node[] x, double[] dec_values) {
+		KernelFunction<svm_node[]> kf = param.makeKernelFunction();
+		if (param.svm_type == svm_parameter.ONE_CLASS
+				|| param.svm_type == svm_parameter.EPSILON_SVR
+				|| param.svm_type == svm_parameter.NU_SVR) {
 			double[] sv_coef = model.sv_coef[0];
 			double sum = 0;
 			for (int i = 0; i < model.l; i++)
@@ -706,7 +708,7 @@ public class svm<T> {
 			sum -= model.rho[0];
 			dec_values[0] = sum;
 
-			if (model.param.svm_type == svm_parameter.ONE_CLASS)
+			if (param.svm_type == svm_parameter.ONE_CLASS)
 				return (sum > 0) ? 1 : -1;
 			else
 				return sum;
@@ -755,25 +757,26 @@ public class svm<T> {
 		}
 	}
 
-	public static double svm_predict(svm_model<svm_node[]> model, svm_node[] x) {
+	public static double svm_predict(svm_parameter param,
+			svm_model<svm_node[]> model, svm_node[] x) {
 		int nr_class = model.nr_class;
 		double[] dec_values;
-		if (model.param.svm_type == svm_parameter.ONE_CLASS
-				|| model.param.svm_type == svm_parameter.EPSILON_SVR
-				|| model.param.svm_type == svm_parameter.NU_SVR)
+		if (param.svm_type == svm_parameter.ONE_CLASS
+				|| param.svm_type == svm_parameter.EPSILON_SVR
+				|| param.svm_type == svm_parameter.NU_SVR)
 			dec_values = new double[1];
 		else
 			dec_values = new double[nr_class * (nr_class - 1) / 2];
-		return svm_predict_values(model, x, dec_values);
+		return svm_predict_values(param, model, x, dec_values);
 	}
 
-	public static double svm_predict_probability(svm_model<svm_node[]> model,
-			svm_node[] x, double[] prob_estimates) {
-		if ((model.param.svm_type == svm_parameter.C_SVC || model.param.svm_type == svm_parameter.NU_SVC)
+	public static double svm_predict_probability(svm_parameter param,
+			svm_model<svm_node[]> model, svm_node[] x, double[] prob_estimates) {
+		if ((param.svm_type == svm_parameter.C_SVC || param.svm_type == svm_parameter.NU_SVC)
 				&& model.probA != null && model.probB != null) {
 			int nr_class = model.nr_class;
 			double[] dec_values = new double[nr_class * (nr_class - 1) / 2];
-			svm_predict_values(model, x, dec_values);
+			svm_predict_values(param, model, x, dec_values);
 
 			double min_prob = 1e-7;
 			double[][] pairwise_prob = new double[nr_class][nr_class];
@@ -793,6 +796,6 @@ public class svm<T> {
 					prob_max_idx = i;
 			return model.label[prob_max_idx];
 		} else
-			return svm_predict(model, x);
+			return svm_predict(param, model, x);
 	}
 }
