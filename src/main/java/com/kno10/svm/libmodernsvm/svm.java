@@ -17,11 +17,37 @@ public class svm<T> {
 	public static final int LIBSVM_VERSION=318; 
 	public static final Random rand = new Random();
 
-	private static void solve_c_svc(svm_problem<svm_node[]> prob, svm_parameter param,
-					double[] alpha, Solver.SolutionInfo si,
-					double Cp, double Cn)
+	static abstract class AbstractSVM<T> {
+		protected double eps;
+		protected int shrinking;
+		protected double cache_size;
+		protected KernelFunction<? super T> kernel_function;
+
+		public AbstractSVM(double eps, int shrinking, double cache_size, KernelFunction<? super T> kernel_function) {
+			this.eps = eps;
+			this.shrinking = shrinking;
+			this.cache_size = cache_size;
+			this.kernel_function = kernel_function;
+		}
+		abstract protected void solve(svm_problem<T> prob,
+				double[] alpha, Solver.SolutionInfo si);
+	}
+	
+	static class SVM_C<T> extends AbstractSVM<T> {
+		
+		double Cp,Cn;
+	
+	private SVM_C(double eps, int shrinking, double cache_size, KernelFunction<? super T> kernel_function, double Cp, double Cn) {
+			super(eps, shrinking, cache_size, kernel_function);
+			this.Cp = Cp;
+			this.Cn = Cn;
+		}
+
+	@Override
+	protected void solve(svm_problem<T> prob,
+					double[] alpha, Solver.SolutionInfo si)
 	{
-		int l = prob.l;
+		final int l = prob.l;
 		double[] minus_ones = new double[l];
 		byte[] y = new byte[l];
 
@@ -35,8 +61,8 @@ public class svm<T> {
 		}
 
 		Solver s = new Solver();
-		s.Solve(l, new SVC_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(),param.cache_size,y), minus_ones, y,
-			alpha, Cp, Cn, param.eps, si, param.shrinking);
+		s.Solve(l, new SVC_Q<T>(l, prob.x,kernel_function,cache_size,y), minus_ones, y,
+			alpha, Cp, Cn, eps, si, shrinking);
 
 		double sum_alpha=0;
 		for(i=0;i<l;i++)
@@ -48,13 +74,20 @@ public class svm<T> {
 		for(i=0;i<l;i++)
 			alpha[i] *= y[i];
 	}
+	}
 
-	private static void solve_nu_svc(svm_problem<svm_node[]> prob, svm_parameter param,
+	static class SVM_Nu<T> extends AbstractSVM<T>  {
+		protected double nu;
+	private SVM_Nu(double eps, int shrinking, double cache_size, KernelFunction<? super T> kernel_function, double nu) {
+			super(eps, shrinking, cache_size, kernel_function);
+			this.nu = nu;
+		}
+	@Override
+	protected void solve(svm_problem<T> prob, 
 					double[] alpha, Solver.SolutionInfo si)
 	{
+		final int l = prob.l;
 		int i;
-		int l = prob.l;
-		double nu = param.nu;
 
 		byte[] y = new byte[l];
 
@@ -82,8 +115,8 @@ public class svm<T> {
 			zeros[i] = 0;
 
 		Solver_NU s = new Solver_NU();
-		s.Solve(l, new SVC_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(),param.cache_size,y), zeros, y,
-			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
+		s.Solve(l, new SVC_Q<T>(l, prob.x,kernel_function,cache_size,y), zeros, y,
+			alpha, 1.0, 1.0, eps, si, shrinking);
 		double r = si.r;
 
 		LOG.info("C = "+1/r+"\n");
@@ -96,21 +129,31 @@ public class svm<T> {
 		si.upper_bound_p = 1/r;
 		si.upper_bound_n = 1/r;
 	}
+	}
 
-	private static void solve_one_class(svm_problem<svm_node[]> prob, svm_parameter param,
+	static class SVM_OneClass<T> extends AbstractSVM<T>  {
+		protected double nu;
+		
+	private SVM_OneClass(double eps, int shrinking, double cache_size, KernelFunction<? super T> kernel_function, double nu) {
+			super(eps, shrinking, cache_size, kernel_function);
+			this.nu = nu;
+		}
+
+	@Override
+	protected void solve(svm_problem<T> prob, 
 					double[] alpha, Solver.SolutionInfo si)
 	{
-		int l = prob.l;
+		final int l = prob.l;
 		double[] zeros = new double[l];
 		byte[] ones = new byte[l];
 		int i;
 
-		int n = (int)(param.nu*prob.l);	// # of alpha's at upper bound
+		int n = (int)(nu*prob.l);	// # of alpha's at upper bound
 
 		for(i=0;i<n;i++)
 			alpha[i] = 1;
 		if(n<prob.l)
-			alpha[n] = param.nu * prob.l - n;
+			alpha[n] = nu * prob.l - n;
 		for(i=n+1;i<l;i++)
 			alpha[i] = 0;
 
@@ -121,14 +164,25 @@ public class svm<T> {
 		}
 
 		Solver s = new Solver();
-		s.Solve(l, new ONE_CLASS_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(),param.cache_size), zeros, ones,
-			alpha, 1.0, 1.0, param.eps, si, param.shrinking);
+		s.Solve(l, new ONE_CLASS_Q<T>(l, prob.x,kernel_function,cache_size), zeros, ones,
+			alpha, 1.0, 1.0, eps, si, shrinking);
+	}
 	}
 
-	private static void solve_epsilon_svr(svm_problem<svm_node[]> prob, svm_parameter param,
+	static class SVR_Epsilon<T> extends AbstractSVM<T>  {
+		protected double p, C;
+		
+	private SVR_Epsilon(double eps, int shrinking, double cache_size, KernelFunction<? super T> kernel_function, double C, double p) {
+			super(eps, shrinking, cache_size, kernel_function);
+			this.p = p;
+			this.C = C;
+		}
+
+	@Override
+	protected void solve(svm_problem<T> prob, 
 					double[] alpha, Solver.SolutionInfo si)
 	{
-		int l = prob.l;
+		final int l = prob.l;
 		double[] alpha2 = new double[2*l];
 		double[] linear_term = new double[2*l];
 		byte[] y = new byte[2*l];
@@ -137,17 +191,17 @@ public class svm<T> {
 		for(i=0;i<l;i++)
 		{
 			alpha2[i] = 0;
-			linear_term[i] = param.p - prob.y[i];
+			linear_term[i] = p - prob.y[i];
 			y[i] = 1;
 
 			alpha2[i+l] = 0;
-			linear_term[i+l] = param.p + prob.y[i];
+			linear_term[i+l] = p + prob.y[i];
 			y[i+l] = -1;
 		}
 
 		Solver s = new Solver();
-		s.Solve(2*l, new SVR_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(),param.cache_size), linear_term, y,
-			alpha2, param.C, param.C, param.eps, si, param.shrinking);
+		s.Solve(2*l, new SVR_Q<T>(l, prob.x,kernel_function,cache_size), linear_term, y,
+			alpha2, C, C, eps, si, shrinking);
 
 		double sum_alpha = 0;
 		for(i=0;i<l;i++)
@@ -155,20 +209,29 @@ public class svm<T> {
 			alpha[i] = alpha2[i] - alpha2[i+l];
 			sum_alpha += Math.abs(alpha[i]);
 		}
-		LOG.info("nu = "+sum_alpha/(param.C*l)+"\n");
-	}
+		LOG.info("nu = "+sum_alpha/(C*l)+"\n");
+	}}
+	
+	static class SVR_Nu<T> extends AbstractSVM<T>  {
+		protected double nu, C;
+		
+	public SVR_Nu(double eps, int shrinking, double cache_size, KernelFunction<? super T> kernel_function, double C, double nu) {
+			super(eps, shrinking, cache_size, kernel_function);
+			this.nu = nu;
+			this.C = C;
+		}
 
-	private static void solve_nu_svr(svm_problem<svm_node[]> prob, svm_parameter param,
+	@Override
+	protected void solve(svm_problem<T> prob, 
 					double[] alpha, Solver.SolutionInfo si)
 	{
-		int l = prob.l;
-		double C = param.C;
+		final int l = prob.l;
 		double[] alpha2 = new double[2*l];
 		double[] linear_term = new double[2*l];
 		byte[] y = new byte[2*l];
 		int i;
 
-		double sum = C * param.nu * l / 2;
+		double sum = C * nu * l / 2;
 		for(i=0;i<l;i++)
 		{
 			alpha2[i] = alpha2[i+l] = Math.min(sum,C);
@@ -182,14 +245,15 @@ public class svm<T> {
 		}
 
 		Solver_NU s = new Solver_NU();
-		s.Solve(2*l, new SVR_Q<svm_node[]>(prob.l, prob.x,param.makeKernelFunction(), param.cache_size), linear_term, y,
-			alpha2, C, C, param.eps, si, param.shrinking);
+		s.Solve(2*l, new SVR_Q<T>(prob.l, prob.x,kernel_function, cache_size), linear_term, y,
+			alpha2, C, C, eps, si, shrinking);
 
 		LOG.info("epsilon = "+(-si.r)+"\n");
 		
 		for(i=0;i<l;i++)
 			alpha[i] = alpha2[i] - alpha2[i+l];
 	}
+}
 
 	//
 	// decision_function
@@ -200,30 +264,12 @@ public class svm<T> {
 		double rho;	
 	};
 
-	static decision_function svm_train_one(
-		svm_problem<svm_node[]> prob, svm_parameter param,
-		double Cp, double Cn)
+	static <T> decision_function svm_train_one(
+		svm_problem<T> prob, AbstractSVM<T> svm)
 	{
 		double[] alpha = new double[prob.l];
 		Solver.SolutionInfo si = new Solver.SolutionInfo();
-		switch(param.svm_type)
-		{
-			case svm_parameter.C_SVC:
-				solve_c_svc(prob,param,alpha,si,Cp,Cn);
-				break;
-			case svm_parameter.NU_SVC:
-				solve_nu_svc(prob,param,alpha,si);
-				break;
-			case svm_parameter.ONE_CLASS:
-				solve_one_class(prob,param,alpha,si);
-				break;
-			case svm_parameter.EPSILON_SVR:
-				solve_epsilon_svr(prob,param,alpha,si);
-				break;
-			case svm_parameter.NU_SVR:
-				solve_nu_svr(prob,param,alpha,si);
-				break;
-		}
+		svm.solve(prob, alpha, si);
 
 		LOG.info("obj = "+si.obj+", rho = "+si.rho+"\n");
 
@@ -650,7 +696,9 @@ public class svm<T> {
 				model.probA[0] = svm_svr_probability(prob,param);
 			}
 
-			decision_function f = svm_train_one(prob,param,0,0);
+			AbstractSVM<svm_node[]> svm = makeSVM(param,0,0);
+
+			decision_function f = svm_train_one(prob,svm);
 			model.rho = new double[1];
 			model.rho[0] = f.rho;
 
@@ -758,7 +806,8 @@ public class svm<T> {
 						probB[p]=probAB[1];
 					}
 
-					f[p] = svm_train_one(sub_prob,param,weighted_C[i],weighted_C[j]);
+					AbstractSVM<svm_node[]> svm = makeSVM(param, weighted_C[i],weighted_C[j]);
+					f[p] = svm_train_one(sub_prob,svm);
 					for(k=0;k<ci;k++)
 						if(!nonzero[si+k] && Math.abs(f[p].alpha[k]) > 0)
 							nonzero[si+k] = true;
@@ -862,6 +911,22 @@ public class svm<T> {
 		return model;
 	}
 	
+	private static AbstractSVM<svm_node[]> makeSVM(svm_parameter param, double Cp, double Cn) {
+		switch(param.svm_type)
+		{
+			case svm_parameter.C_SVC:
+				return new SVM_C<svm_node[]>(param.eps, param.shrinking, param.cache_size, param.makeKernelFunction(), Cp, Cn);
+			case svm_parameter.NU_SVC:
+				return new SVM_Nu<svm_node[]>(param.eps, param.shrinking, param.cache_size, param.makeKernelFunction(), param.nu);
+			case svm_parameter.ONE_CLASS:
+				return new SVM_OneClass<svm_node[]>(param.eps, param.shrinking, param.cache_size, param.makeKernelFunction(), param.nu);
+			case svm_parameter.EPSILON_SVR:
+				return new SVR_Epsilon<svm_node[]>(param.eps, param.shrinking, param.cache_size, param.makeKernelFunction(), param.C, param.p);
+			case svm_parameter.NU_SVR:
+				return new SVR_Nu<svm_node[]>(param.eps, param.shrinking, param.cache_size, param.makeKernelFunction(), param.C, param.nu);
+		}
+		throw new RuntimeException("Unknown SVM type");
+	}
 	// Stratified cross validation
 	public static void svm_cross_validation(svm_problem<svm_node[]> prob, svm_parameter param, int nr_fold, double[] target)
 	{
