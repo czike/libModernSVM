@@ -38,9 +38,9 @@ public class SVR_Nu<T> extends AbstractSVR<T> {
 			y[i + l] = -1;
 		}
 
-		Solver.SolutionInfo si = new Solver_NU().solve(2 * l, new SVR_Q<T>(x,
-				kernel_function, cache_size), linear_term, y, alpha2, C, C,
-				eps, shrinking);
+		SVR_Q<T> Q = new SVR_Q<T>(x, kernel_function, cache_size);
+		Solver.SolutionInfo si = new Solver_NU().solve(2 * l, Q, linear_term,
+				y, alpha2, C, C, eps, shrinking);
 
 		if (LOG.isLoggable(Level.INFO)) {
 			LOG.info("epsilon = " + (-si.r) + "\n");

@@ -18,7 +18,8 @@ public class SVC_Nu<T> extends AbstractSVC<T> {
 	}
 
 	@Override
-	protected Solver.SolutionInfo solve(DataSet<T> x, KernelFunction<? super T> kernel_function) {
+	protected Solver.SolutionInfo solve(DataSet<T> x,
+			KernelFunction<? super T> kernel_function) {
 		final int l = x.size();
 		byte[] y = new byte[l];
 		for (int i = 0; i < l; i++) {
@@ -38,9 +39,9 @@ public class SVC_Nu<T> extends AbstractSVC<T> {
 
 		double[] zeros = new double[l];
 
-		Solver.SolutionInfo si = new Solver_NU().solve(l, new SVC_Q<T>(x,
-				kernel_function, cache_size, y), zeros, y, alpha, 1.0, 1.0,
-				eps, shrinking);
+		SVC_Q<T> Q = new SVC_Q<T>(x, kernel_function, cache_size, y);
+		Solver.SolutionInfo si = new Solver_NU().solve(l, Q, zeros, y, alpha,
+				1., 1., eps, shrinking);
 		if (LOG.isLoggable(Level.INFO)) {
 			LOG.info("C = " + 1 / si.r + "\n");
 		}

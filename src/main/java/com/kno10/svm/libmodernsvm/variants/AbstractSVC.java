@@ -199,9 +199,10 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 			if (submodel instanceof ProbabilisticClassificationModel) {
 				ProbabilisticClassificationModel<T> pm = (ProbabilisticClassificationModel<T>) submodel;
 				double[] prob_estimates = new double[submodel.nr_class];
-				for (int j = begin; j < end; j++)
+				for (int j = begin; j < end; j++) {
 					target[perm[j]] = pm.predict_prob(x.get(perm[j]), kf,
 							prob_estimates);
+				}
 			} else {
 				for (int j = begin; j < end; j++) {
 					target[perm[j]] = submodel.predict(x.get(perm[j]), kf);
@@ -242,9 +243,9 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 			t[i] = (x.value(i) > 0) ? hiTarget : loTarget;
 			double fApB = dec_values[i] * A + B;
 			if (fApB >= 0) {
-				fval += t[i] * fApB + Math.log(1 + Math.exp(-fApB));
+				fval += t[i] * fApB + Math.log1p(Math.exp(-fApB));
 			} else {
-				fval += (t[i] - 1) * fApB + Math.log(1 + Math.exp(fApB));
+				fval += (t[i] - 1) * fApB + Math.log1p(Math.exp(fApB));
 			}
 		}
 		for (int iter = 0; iter < max_iter; iter++) {
@@ -292,10 +293,9 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 				for (int i = 0; i < l; i++) {
 					double fApB = dec_values[i] * newA + newB;
 					if (fApB >= 0) {
-						newf += t[i] * fApB + Math.log(1 + Math.exp(-fApB));
+						newf += t[i] * fApB + Math.log1p(Math.exp(-fApB));
 					} else {
-						newf += (t[i] - 1) * fApB
-								+ Math.log(1 + Math.exp(fApB));
+						newf += (t[i] - 1) * fApB + Math.log1p(Math.exp(fApB));
 					}
 				}
 				// Check sufficient decrease
@@ -364,18 +364,12 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 					dec_values[perm[j]] = -1;
 				}
 			} else {
-				svm_parameter subparam = (svm_parameter) param.clone();
-				subparam.probability = 0;
-				subparam.C = 1.0;
-				subparam.nr_weight = 2;
-				subparam.weight_label = new int[2];
-				subparam.weight = new double[2];
-				subparam.weight_label[0] = +1;
-				subparam.weight_label[1] = -1;
-				subparam.weight[0] = Cp;
-				subparam.weight[1] = Cn;
-				ClassificationModel<T> submodel = (ClassificationModel<T>) train(
-						newx, kf, new double[] { Cp, Cn });
+				set_weights(Cp, Cn);
+				train_one(newx, kf);
+				ClassificationModel<T> submodel = new ClassificationModel<T>();
+				submodel.nr_class = 2;
+				submodel.label = new int[] { +1, -1 };
+				submodel.rho = new double[] { rho, rho };
 				for (int j = begin; j < end; j++) {
 					double[] dec_value = new double[1];
 					submodel.predict(x.get(perm[j]), kf, dec_value);

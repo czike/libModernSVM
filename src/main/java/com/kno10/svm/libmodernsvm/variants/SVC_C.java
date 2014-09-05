@@ -40,9 +40,9 @@ public class SVC_C<T> extends AbstractSVC<T> {
 			y[i] = (byte) ((x.value(i) > 0) ? +1 : -1);
 		}
 
-		Solver.SolutionInfo si = new Solver().solve(l, new SVC_Q<T>(x,
-				kernel_function, cache_size, y), minus_ones, y, alpha, Cp, Cn,
-				eps, shrinking);
+		SVC_Q<T> Q = new SVC_Q<T>(x, kernel_function, cache_size, y);
+		Solver.SolutionInfo si = new Solver().solve(l, Q, minus_ones, y, alpha,
+				Cp, Cn, eps, shrinking);
 
 		if (Cp == Cn && LOG.isLoggable(Level.INFO)) {
 			double sum_alpha = 0;
@@ -50,7 +50,9 @@ public class SVC_C<T> extends AbstractSVC<T> {
 				sum_alpha += alpha[i];
 			}
 
-			LOG.info("nu = " + sum_alpha / (Cp * l) + "\n");
+			if (LOG.isLoggable(Level.INFO)) {
+				LOG.info("nu = " + sum_alpha / (Cp * l) + "\n");
+			}
 		}
 
 		for (int i = 0; i < l; i++) {
