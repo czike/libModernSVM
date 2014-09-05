@@ -80,6 +80,7 @@ public class Solver {
 	}
 
 	void swap_index(int i, int j) {
+		// This will also swap QD:
 		Q.swap_index(i, j);
 		ArrayUtil.swap(y, i, j);
 		ArrayUtil.swap(G, i, j);
@@ -96,12 +97,11 @@ public class Solver {
 			return;
 		}
 
-		int nr_free = 0;
-
 		for (int j = active_size; j < l; j++) {
 			G[j] = G_bar[j] + p[j];
 		}
 
+		int nr_free = 0;
 		for (int j = 0; j < active_size; j++) {
 			if (is_free(j)) {
 				nr_free++;
@@ -109,7 +109,7 @@ public class Solver {
 		}
 
 		if (2 * nr_free < active_size) {
-			LOG.info("\nWARNING: using -h 0 may be faster\n");
+			LOG.info("WARNING: using -h 0 may be faster");
 		}
 
 		if (nr_free * l > 2 * active_size * (l - active_size)) {
@@ -166,27 +166,7 @@ public class Solver {
 		}
 
 		// initialize gradient
-		{
-			G = new double[l];
-			G_bar = new double[l];
-			for (int i = 0; i < l; i++) {
-				G[i] = p[i];
-				G_bar[i] = 0;
-			}
-			for (int i = 0; i < l; i++)
-				if (!is_lower_bound(i)) {
-					float[] Q_i = Q.get_Q(i, l);
-					double alpha_i = alpha[i];
-					for (int j = 0; j < l; j++) {
-						G[j] += alpha_i * Q_i[j];
-					}
-					if (is_upper_bound(i)) {
-						for (int j = 0; j < l; j++) {
-							G_bar[j] += get_C(i) * Q_i[j];
-						}
-					}
-				}
-		}
+		initializeGradient();
 
 		// optimization step
 
@@ -300,28 +280,12 @@ public class Solver {
 			update_alpha_status(j);
 			if (ui != is_upper_bound(i)) {
 				Q_i = Q.get_Q(i, l);
-				if (ui) {
-					for (int k = 0; k < l; k++) {
-						G_bar[k] -= C_i * Q_i[k];
-					}
-				} else {
-					for (int k = 0; k < l; k++) {
-						G_bar[k] += C_i * Q_i[k];
-					}
-				}
+				update_G_bar(ui ? -C_i : C_i, Q_i, l);
 			}
 
 			if (uj != is_upper_bound(j)) {
 				Q_j = Q.get_Q(j, l);
-				if (uj) {
-					for (int k = 0; k < l; k++) {
-						G_bar[k] -= C_j * Q_j[k];
-					}
-				} else {
-					for (int k = 0; k < l; k++) {
-						G_bar[k] += C_j * Q_j[k];
-					}
-				}
+				update_G_bar(uj ? -C_j : C_j, Q_j, l);
 			}
 			if (iter >= max_iter) {
 				if (active_size < l) {
@@ -349,6 +313,35 @@ public class Solver {
 		si.upper_bound_p = Cp;
 		si.upper_bound_n = Cn;
 		return si;
+	}
+
+	private void update_G_bar(double C_i, float[] Q_i, int l) {
+		for (int k = 0; k < l; k++) {
+			G_bar[k] += C_i * Q_i[k];
+		}
+	}
+
+	public void initializeGradient() {
+		G = new double[l];
+		G_bar = new double[l];
+		for (int i = 0; i < l; i++) {
+			G[i] = p[i];
+			G_bar[i] = 0;
+		}
+		for (int i = 0; i < l; i++) {
+			if (!is_lower_bound(i)) {
+				float[] Q_i = Q.get_Q(i, l);
+				double alpha_i = alpha[i];
+				for (int j = 0; j < l; j++) {
+					G[j] += alpha_i * Q_i[j];
+				}
+				if (is_upper_bound(i)) {
+					for (int j = 0; j < l; j++) {
+						G_bar[j] += get_C(i) * Q_i[j];
+					}
+				}
+			}
+		}
 	}
 
 	protected double calculate_obj() {
@@ -511,18 +504,18 @@ public class Solver {
 		int nr_free = 0;
 		double ub = Double.POSITIVE_INFINITY, lb = Double.NEGATIVE_INFINITY, sum_free = 0;
 		for (int i = 0; i < active_size; i++) {
-			double yG = y[i] * G[i];
+			final double yG = y[i] * G[i];
 			if (is_lower_bound(i)) {
 				if (y[i] > 0) {
-					ub = Math.min(ub, yG);
+					ub = ub < yG ? ub : yG;
 				} else {
-					lb = Math.max(lb, yG);
+					lb = lb > yG ? lb : yG;
 				}
 			} else if (is_upper_bound(i)) {
 				if (y[i] < 0) {
-					ub = Math.min(ub, yG);
+					ub = ub < yG ? ub : yG;
 				} else {
-					lb = Math.max(lb, yG);
+					lb = lb > yG ? lb : yG;
 				}
 			} else {
 				++nr_free;
@@ -530,6 +523,6 @@ public class Solver {
 			}
 		}
 
-		return (nr_free > 0) ? sum_free / nr_free : (ub + lb) / 2;
+		return (nr_free > 0) ? sum_free / nr_free : (ub + lb) * .5;
 	}
 }

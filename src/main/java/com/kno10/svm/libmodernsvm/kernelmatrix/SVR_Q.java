@@ -47,16 +47,16 @@ public class SVR_Q<T> extends Kernel<T> {
 
 	@Override
 	public float[] get_Q(int i, int len) {
-		float[][] data = new float[1][];
-		int j, real_i = index[i];
-		data[0] = super.get_Q(real_i, l);
+		final int real_i = index[i];
+		// From cache, not swapped; always get all l values!
+		float[] data = super.get_Q(real_i, l);
 
 		// reorder and copy
 		float buf[] = buffer[next_buffer];
 		next_buffer = 1 - next_buffer;
 		byte si = sign[i];
-		for (j = 0; j < len; j++) {
-			buf[j] = (float) si * sign[j] * data[0][index[j]];
+		for (int j = 0; j < len; j++) {
+			buf[j] = (float) si * sign[j] * data[index[j]];
 		}
 		return buf;
 	}

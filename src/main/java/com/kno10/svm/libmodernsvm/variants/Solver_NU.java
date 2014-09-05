@@ -24,14 +24,14 @@ public class Solver_NU extends Solver {
 		// (if quadratic coefficeint <= 0, replace it with tau)
 		// -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
 
-		double Gmaxp = -java.lang.Double.POSITIVE_INFINITY, Gmaxp2 = -java.lang.Double.POSITIVE_INFINITY;
+		double Gmaxp = -Double.POSITIVE_INFINITY, Gmaxp2 = -Double.POSITIVE_INFINITY;
 		int Gmaxp_idx = -1;
 
-		double Gmaxn = -java.lang.Double.POSITIVE_INFINITY, Gmaxn2 = -java.lang.Double.POSITIVE_INFINITY;
+		double Gmaxn = -Double.POSITIVE_INFINITY, Gmaxn2 = -Double.POSITIVE_INFINITY;
 		int Gmaxn_idx = -1;
 
 		int Gmin_idx = -1;
-		double obj_diff_min = java.lang.Double.POSITIVE_INFINITY;
+		double obj_diff_min = Double.POSITIVE_INFINITY;
 
 		for (int t = 0; t < active_size; t++) {
 			if (y[t] == +1) {
@@ -67,7 +67,8 @@ public class Solver_NU extends Solver {
 					}
 					if (grad_diff > 0) {
 						double quad_coef = QD[ip] + QD[j] - 2 * Q_ip[j];
-						double obj_diff = -(grad_diff * grad_diff) / nonzero(quad_coef);
+						double obj_diff = -(grad_diff * grad_diff)
+								/ nonzero(quad_coef);
 
 						if (obj_diff <= obj_diff_min) {
 							Gmin_idx = j;
@@ -83,7 +84,8 @@ public class Solver_NU extends Solver {
 					}
 					if (grad_diff > 0) {
 						double quad_coef = QD[in] + QD[j] - 2 * Q_in[j];
-						double obj_diff = -(grad_diff * grad_diff) / nonzero(quad_coef);
+						double obj_diff = -(grad_diff * grad_diff)
+								/ nonzero(quad_coef);
 
 						if (obj_diff <= obj_diff_min) {
 							Gmin_idx = j;
@@ -116,14 +118,18 @@ public class Solver_NU extends Solver {
 
 	@Override
 	void do_shrinking() {
-		double Gmax1 = -java.lang.Double.POSITIVE_INFINITY; // max { -y_i * grad(f)_i | y_i = +1, i in
-								// I_up(\alpha) }
-		double Gmax2 = -java.lang.Double.POSITIVE_INFINITY; // max { y_i * grad(f)_i | y_i = +1, i in
-								// I_low(\alpha) }
-		double Gmax3 = -java.lang.Double.POSITIVE_INFINITY; // max { -y_i * grad(f)_i | y_i = -1, i in
-								// I_up(\alpha) }
-		double Gmax4 = -java.lang.Double.POSITIVE_INFINITY; // max { y_i * grad(f)_i | y_i = -1, i in
-								// I_low(\alpha) }
+		double Gmax1 = -Double.POSITIVE_INFINITY; // max { -y_i * grad(f)_i |
+													// y_i = +1, i in
+		// I_up(\alpha) }
+		double Gmax2 = -Double.POSITIVE_INFINITY; // max { y_i * grad(f)_i | y_i
+													// = +1, i in
+		// I_low(\alpha) }
+		double Gmax3 = -Double.POSITIVE_INFINITY; // max { -y_i * grad(f)_i |
+													// y_i = -1, i in
+		// I_up(\alpha) }
+		double Gmax4 = -Double.POSITIVE_INFINITY; // max { y_i * grad(f)_i | y_i
+													// = -1, i in
+		// I_low(\alpha) }
 
 		// find maximal violating pair first
 		int i;
@@ -170,8 +176,8 @@ public class Solver_NU extends Solver {
 	@Override
 	double calculate_rho() {
 		int nr_free1 = 0, nr_free2 = 0;
-		double ub1 = java.lang.Double.POSITIVE_INFINITY, ub2 = java.lang.Double.POSITIVE_INFINITY;
-		double lb1 = -java.lang.Double.POSITIVE_INFINITY, lb2 = -java.lang.Double.POSITIVE_INFINITY;
+		double ub1 = Double.POSITIVE_INFINITY, ub2 = Double.POSITIVE_INFINITY;
+		double lb1 = -Double.POSITIVE_INFINITY, lb2 = -Double.POSITIVE_INFINITY;
 		double sum_free1 = 0, sum_free2 = 0;
 
 		for (int i = 0; i < active_size; i++) {
@@ -199,7 +205,7 @@ public class Solver_NU extends Solver {
 		double r1 = (nr_free1 > 0) ? sum_free1 / nr_free1 : (ub1 + lb1) * .5;
 		double r2 = (nr_free2 > 0) ? sum_free2 / nr_free2 : (ub2 + lb2) * .5;
 
-		si.r = (r1 + r2) / 2;
-		return (r1 - r2) / 2;
+		si.r = (r1 + r2) * .5;
+		return (r1 - r2) * .5;
 	}
 }

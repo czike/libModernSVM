@@ -5,6 +5,7 @@ import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 
 public abstract class KernelWithQD<T> extends Kernel<T> {
+	// Diagonal values <x,x>
 	private final double[] QD;
 
 	public KernelWithQD(DataSet<T> x, KernelFunction<? super T> kf,

@@ -17,10 +17,10 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 
 	boolean probability = false;
 
-	public ClassificationModel<T> svm_train_classification(DataSet<T> x,
+	public ClassificationModel<T> train(DataSet<T> x,
 			KernelFunction<? super T> kf, double[] weighted_C) {
 		final int l = x.size();
-		// classification
+		// Fake writable references for Java:
 		int[] tmp_nr_class = new int[1];
 		int[][] tmp_label = new int[1][];
 		int[][] tmp_start = new int[1][];
@@ -166,9 +166,8 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 	}
 
 	// Stratified cross validation
-	public void svm_cross_validation_classification(DataSet<T> x,
-			KernelFunction<? super T> kf, double[] weighted_C, int nr_fold,
-			double[] target) {
+	public void cross_validation(DataSet<T> x, KernelFunction<? super T> kf,
+			double[] weighted_C, int nr_fold, double[] target) {
 		final int l = x.size();
 		int[] fold_start = new int[nr_fold + 1];
 		int[] perm = new int[l];
@@ -197,8 +196,7 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 			for (int j = end; j < l; ++j) {
 				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
-			ClassificationModel<T> submodel = svm_train_classification(newx,
-					kf, weighted_C);
+			ClassificationModel<T> submodel = train(newx, kf, weighted_C);
 			if (submodel instanceof ProbabilisticClassificationModel) {
 				ProbabilisticClassificationModel<T> pm = (ProbabilisticClassificationModel<T>) submodel;
 				double[] prob_estimates = new double[submodel.nr_class];
@@ -217,7 +215,6 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 	private void sigmoid_train(double[] dec_values, DataSet<?> x,
 			double[] probAB) {
 		final int l = x.size();
-		double A, B;
 		double prior1 = 0, prior0 = 0;
 
 		for (int i = 0; i < l; i++) {
@@ -228,24 +225,22 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 			}
 		}
 
-		int max_iter = 100; // Maximal number of iterations
-		double min_step = 1e-10; // Minimal step taken in line search
-		double sigma = 1e-12; // For numerically strict PD of Hessian
-		double eps = 1e-5;
-		double hiTarget = (prior1 + 1.0) / (prior1 + 2.0);
-		double loTarget = 1 / (prior0 + 2.0);
+		final int max_iter = 100; // Maximal number of iterations
+		final double min_step = 1e-10; // Minimal step taken in line search
+		final double sigma = 1e-12; // For numerically strict PD of Hessian
+		final double eps = 1e-5;
+		double hiTarget = (prior1 + 1.) / (prior1 + 2.);
+		double loTarget = 1. / (prior0 + 2.);
 		double[] t = new double[l];
-		double fApB, p, q, h11, h22, h21, g1, g2, det, dA, dB, gd, stepsize;
-		double newA, newB, newf, d1, d2;
 
 		// Initial Point and Initial Fun Value
-		A = 0.0;
-		B = Math.log((prior0 + 1.0) / (prior1 + 1.0));
-		double fval = 0.0;
+		double A = 0.;
+		double B = Math.log((prior0 + 1.) / (prior1 + 1.));
+		double fval = 0.;
 
 		for (int i = 0; i < l; i++) {
 			t[i] = (x.value(i) > 0) ? hiTarget : loTarget;
-			fApB = dec_values[i] * A + B;
+			double fApB = dec_values[i] * A + B;
 			if (fApB >= 0) {
 				fval += t[i] * fApB + Math.log(1 + Math.exp(-fApB));
 			} else {
@@ -254,13 +249,12 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 		}
 		for (int iter = 0; iter < max_iter; iter++) {
 			// Update Gradient and Hessian (use H' = H + sigma I)
-			h11 = sigma; // numerically ensures strict PD
-			h22 = sigma;
-			h21 = 0.0;
-			g1 = 0.0;
-			g2 = 0.0;
+			// numerically ensures strict PD
+			double h11 = sigma, h22 = sigma, h21 = 0.;
+			double g1 = 0., g2 = 0.;
 			for (int i = 0; i < l; i++) {
-				fApB = dec_values[i] * A + B;
+				double fApB = dec_values[i] * A + B;
+				final double p, q;
 				if (fApB >= 0) {
 					p = Math.exp(-fApB) / (1.0 + Math.exp(-fApB));
 					q = 1.0 / (1.0 + Math.exp(-fApB));
@@ -268,11 +262,11 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 					p = 1.0 / (1.0 + Math.exp(fApB));
 					q = Math.exp(fApB) / (1.0 + Math.exp(fApB));
 				}
-				d2 = p * q;
+				double d2 = p * q;
 				h11 += dec_values[i] * dec_values[i] * d2;
 				h22 += d2;
 				h21 += dec_values[i] * d2;
-				d1 = t[i] - p;
+				double d1 = t[i] - p;
 				g1 += dec_values[i] * d1;
 				g2 += d1;
 			}
@@ -283,20 +277,20 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 			}
 
 			// Finding Newton direction: -inv(H') * g
-			det = h11 * h22 - h21 * h21;
-			dA = -(h22 * g1 - h21 * g2) / det;
-			dB = -(-h21 * g1 + h11 * g2) / det;
-			gd = g1 * dA + g2 * dB;
+			double det = h11 * h22 - h21 * h21;
+			double dA = -(h22 * g1 - h21 * g2) / det;
+			double dB = -(-h21 * g1 + h11 * g2) / det;
+			double gd = g1 * dA + g2 * dB;
 
-			stepsize = 1; // Line Search
+			double stepsize = 1.; // Line Search
 			while (stepsize >= min_step) {
-				newA = A + stepsize * dA;
-				newB = B + stepsize * dB;
+				double newA = A + stepsize * dA;
+				double newB = B + stepsize * dB;
 
 				// New function value
-				newf = 0.0;
+				double newf = 0.;
 				for (int i = 0; i < l; i++) {
-					fApB = dec_values[i] * newA + newB;
+					double fApB = dec_values[i] * newA + newB;
 					if (fApB >= 0) {
 						newf += t[i] * fApB + Math.log(1 + Math.exp(-fApB));
 					} else {
@@ -310,9 +304,8 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 					B = newB;
 					fval = newf;
 					break;
-				} else {
-					stepsize = stepsize * .5;
 				}
+				stepsize = stepsize * .5;
 			}
 
 			if (stepsize < min_step) {
@@ -381,7 +374,7 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 				subparam.weight_label[1] = -1;
 				subparam.weight[0] = Cp;
 				subparam.weight[1] = Cn;
-				ClassificationModel<T> submodel = (ClassificationModel<T>) svm_train_classification(
+				ClassificationModel<T> submodel = (ClassificationModel<T>) train(
 						newx, kf, new double[] { Cp, Cn });
 				for (int j = begin; j < end; j++) {
 					double[] dec_value = new double[1];
