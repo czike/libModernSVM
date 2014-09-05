@@ -45,3 +45,31 @@ the C version, but our version also kept 400 fewer support vectors. So the
 good news so far are that this version is faster, more flexible, and yields
 a smaller (and thus faster at predicting) SVM. The bad news is, it's not clear
 whether this trend is consistent, and what caused it.
+
+Explanation of Performance Difference
+-------------------------------------
+
+The original implementation used a very C style data type: each vector was
+represented as an `svm_node[]` array. For Java, this is a rather costly choice.
+C uses structs, and `svm_node[]` then will be a continuous block of memory,
+interleaving `int` and `double` (with the worst case that the values get padded
+to 8 byte boundaries).
+
+Java on the other hand does not have efficient structs. Many small objects can
+hurt your performance, in particular when the garbage collection kicks in. This
+representation of sparse vectors yields a kind of ragged array: each array
+entries points to an object (which may reside at a different memory location)
+and these tiny objects, carrying 12 bytes of payload but using 24 bytes of memory.
+This memory layout therefore has an overhead of about 100%.
+
+My replacement vector representation - consisting of an `int[]` for the indexes
+and a `double[]` array - only adds 36-40 bytes of total overhead per vector.
+Plus, I assume, this memory layout is easier to optimize for Java and easier
+to perform garbage collection. I found these vector representations to work
+well when working on [ELKI Data Mining](http://elki.dbs.ifi.lmu.de/). Many of
+the changes done to this version of libSVM are meant to make it easier to
+integrate in ELKI...
+
+First benchmarking results showed that most of the runtime is indeed used to
+compute the kernel functions. Benefits in computing dot products can therefore
+be expected to directly translate into overall performance gains.
