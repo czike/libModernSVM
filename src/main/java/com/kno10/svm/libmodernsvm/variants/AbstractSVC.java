@@ -62,12 +62,18 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 
 				if (probability) {
 					double[] probAB = new double[2];
-					binary_svc_probability(newx, kf, weighted_C[i],
-							weighted_C[j], probAB);
+					double Ci = 1, Cj = 1;
+					if (weighted_C != null) {
+						Ci = weighted_C[i];
+						Cj = weighted_C[j];
+					}
+					binary_svc_probability(newx, kf, Ci, Cj, probAB);
 					probA[p] = probAB[0];
 					probB[p] = probAB[1];
 				}
-				set_weights(weighted_C[i], weighted_C[j]);
+				if (weighted_C != null) {
+					set_weights(weighted_C[i], weighted_C[j]);
+				}
 				train_one(newx, kf);
 				f_alpha[p] = alpha;
 				f_rho[p] = rho;
