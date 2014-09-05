@@ -7,12 +7,12 @@ import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.SVC_Q;
 
-public class SVC_Nu<T> extends AbstractSVC<T> {
-	private static final Logger LOG = Logger.getLogger(SVC_Nu.class.getName());
+public class NuSVC<T> extends AbstractSVC<T> {
+	private static final Logger LOG = Logger.getLogger(NuSVC.class.getName());
 
 	protected double nu;
 
-	public SVC_Nu(double eps, int shrinking, double cache_size, double nu) {
+	public NuSVC(double eps, int shrinking, double cache_size, double nu) {
 		super(eps, shrinking, cache_size);
 		this.nu = nu;
 	}
@@ -28,6 +28,7 @@ public class SVC_Nu<T> extends AbstractSVC<T> {
 
 		double sum_pos = nu * l / 2, sum_neg = nu * l / 2;
 
+		double[] alpha = new double[l];
 		for (int i = 0; i < l; i++)
 			if (y[i] == +1) {
 				alpha[i] = Math.min(1.0, sum_pos);
@@ -43,11 +44,11 @@ public class SVC_Nu<T> extends AbstractSVC<T> {
 		Solver.SolutionInfo si = new Solver_NU().solve(l, Q, zeros, y, alpha,
 				1., 1., eps, shrinking);
 		if (LOG.isLoggable(Level.INFO)) {
-			LOG.info("C = " + 1 / si.r + "\n");
+			LOG.info("C = " + 1 / si.r);
 		}
 
 		for (int i = 0; i < l; i++) {
-			alpha[i] *= y[i] / si.r;
+			si.alpha[i] *= y[i] / si.r;
 		}
 
 		si.rho /= si.r;

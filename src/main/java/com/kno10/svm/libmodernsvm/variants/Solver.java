@@ -73,11 +73,14 @@ public class Solver {
 	// java: information about solution except alpha,
 	// because we cannot return multiple values otherwise...
 	static class SolutionInfo {
-		double obj;
-		double rho;
-		double upper_bound_p;
-		double upper_bound_n;
+		public SolutionInfo(int l) {
+			alpha = new double[l];
+		}
+
+		double obj, rho;
+		double upper_bound_p, upper_bound_n;
 		double r; // for Solver_NU
+		double[] alpha;
 	}
 
 	void swap_index(int i, int j) {
@@ -137,7 +140,7 @@ public class Solver {
 
 	SolutionInfo solve(int l, QMatrix Q, double[] p_, byte[] y_,
 			double[] alpha_, double Cp, double Cn, double eps, int shrinking) {
-		SolutionInfo si = new SolutionInfo();
+		SolutionInfo si = new SolutionInfo(l);
 		solve(si, l, Q, p_, y_, alpha_, Cp, Cn, eps, shrinking);
 		return si;
 	}
@@ -318,7 +321,7 @@ public class Solver {
 
 		// put back the solution
 		for (int i = 0; i < l; i++) {
-			alpha_[active_set[i]] = alpha[i];
+			si.alpha[active_set[i]] = alpha[i];
 		}
 
 		si.upper_bound_p = Cp;

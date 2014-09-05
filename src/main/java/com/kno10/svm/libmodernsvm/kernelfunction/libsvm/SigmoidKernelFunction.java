@@ -1,4 +1,4 @@
-package com.kno10.svm.libmodernsvm.sparsevec;
+package com.kno10.svm.libmodernsvm.kernelfunction.libsvm;
 
 
 /**
@@ -14,7 +14,7 @@ public class SigmoidKernelFunction extends AbstractKernelFunction {
 		this.coef0 = coef0;
 	}
 
-	public double similarity(SparseVector x, SparseVector y) {
+	public double similarity(SparseVectorEntry[] x, SparseVectorEntry[] y) {
 		return Math.tanh(gamma*dot(x,y)+coef0);
 	}
 }

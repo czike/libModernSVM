@@ -12,12 +12,12 @@ import com.kno10.svm.libmodernsvm.kernelmatrix.ONE_CLASS_Q;
  *
  * @param <T>
  */
-public class SVR_OneClass<T> extends AbstractSVR<T> {
-	private static final Logger LOG = Logger.getLogger(SVR_OneClass.class
+public class OneClassSVM<T> extends AbstractSVR<T> {
+	private static final Logger LOG = Logger.getLogger(OneClassSVM.class
 			.getName());
 	protected double nu;
 
-	public SVR_OneClass(double eps, int shrinking, double cache_size, double nu) {
+	public OneClassSVM(double eps, int shrinking, double cache_size, double nu) {
 		super(eps, shrinking, cache_size);
 		this.nu = nu;
 	}
@@ -31,6 +31,7 @@ public class SVR_OneClass<T> extends AbstractSVR<T> {
 
 		final int n = (int) (nu * l); // # of alpha's at upper bound
 
+		double[] alpha = new double[l];
 		for (int i = 0; i < n; i++) {
 			alpha[i] = 1;
 		}

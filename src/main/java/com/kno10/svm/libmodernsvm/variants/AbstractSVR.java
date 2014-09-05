@@ -14,7 +14,8 @@ public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
 		super(eps, shrinking, cache_size);
 	}
 
-	public RegressionModel<T> make_model(DataSet<T> x, double[] probA) {
+	public RegressionModel<T> make_model(Solver.SolutionInfo si, DataSet<T> x,
+			double[] probA) {
 		final int l = x.size();
 		// TODO: re-add probability support
 		RegressionModel<T> model;
@@ -28,11 +29,11 @@ public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
 		model.nr_class = 2;
 		model.sv_coef = new double[1][];
 		model.rho = new double[1];
-		model.rho[0] = rho;
+		model.rho[0] = si.rho;
 
 		int nSV = 0;
 		for (int i = 0; i < l; i++) {
-			if (Math.abs(alpha[i]) > 0) {
+			if (nonzero(si.alpha[i])) {
 				++nSV;
 			}
 		}
@@ -41,9 +42,9 @@ public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
 		model.sv_coef[0] = new double[nSV];
 		model.sv_indices = new int[nSV];
 		for (int i = 0, j = 0; i < l; i++) {
-			if (Math.abs(alpha[i]) > 0) {
+			if (nonzero(si.alpha[i])) {
 				model.SV.add(x.get(i));
-				model.sv_coef[0][j] = alpha[i];
+				model.sv_coef[0][j] = si.alpha[i];
 				model.sv_indices[j] = i + 1;
 				++j;
 			}
@@ -103,8 +104,9 @@ public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
 		mae /= (l - count);
 		if (getLogger().isLoggable(Level.INFO)) {
 			getLogger()
-					.info("Prob. model for test data: target value = predicted value + z,\nz: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma="
-							+ mae + "\n");
+					.info("Prob. model for test data: target value = predicted value + z,\n"
+							+ "z: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma="
+							+ mae);
 		}
 		return mae;
 	}
@@ -118,7 +120,7 @@ public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
 			probA[0] = svr_probability(x, kf, probA);
 		}
 
-		train_one(x, kf);
-		return make_model(x, probA);
+		Solver.SolutionInfo si = train_one(x, kf);
+		return make_model(si, x, probA);
 	}
 }

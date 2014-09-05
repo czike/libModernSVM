@@ -1,4 +1,4 @@
-package com.kno10.svm.libmodernsvm.kernelfunction;
+package com.kno10.svm.libmodernsvm.kernelfunction.libsvm;
 
 
 /**

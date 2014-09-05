@@ -3,4 +3,4 @@
  *
  * @author Erich Schubert
  */
-package com.kno10.svm.libmodernsvm.sparsevec;
+package com.kno10.svm.libmodernsvm.kernelfunction.sparsevec;

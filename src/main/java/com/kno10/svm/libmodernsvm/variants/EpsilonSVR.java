@@ -7,12 +7,12 @@ import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.SVR_Q;
 
-public class SVR_Epsilon<T> extends AbstractSVR<T> {
-	private static final Logger LOG = Logger.getLogger(SVR_Epsilon.class
+public class EpsilonSVR<T> extends AbstractSVR<T> {
+	private static final Logger LOG = Logger.getLogger(EpsilonSVR.class
 			.getName());
 	protected double p, C;
 
-	public SVR_Epsilon(double eps, int shrinking, double cache_size, double C,
+	public EpsilonSVR(double eps, int shrinking, double cache_size, double C,
 			double p) {
 		super(eps, shrinking, cache_size);
 		this.p = p;
@@ -41,13 +41,14 @@ public class SVR_Epsilon<T> extends AbstractSVR<T> {
 		Solver.SolutionInfo si = new Solver().solve(2 * l, Q, linear_term, y,
 				alpha2, C, C, eps, shrinking);
 
+		// Update alpha
+		double sum_alpha = 0;
+		for (int i = 0; i < l; i++) {
+			si.alpha[i] = alpha2[i] - alpha2[i + l];
+			sum_alpha += Math.abs(si.alpha[i]);
+		}
 		if (LOG.isLoggable(Level.INFO)) {
-			double sum_alpha = 0;
-			for (int i = 0; i < l; i++) {
-				alpha[i] = alpha2[i] - alpha2[i + l];
-				sum_alpha += Math.abs(alpha[i]);
-			}
-			LOG.info("nu = " + sum_alpha / (C * l) + "\n");
+			LOG.info("nu = " + sum_alpha / (C * l));
 		}
 		return si;
 	}

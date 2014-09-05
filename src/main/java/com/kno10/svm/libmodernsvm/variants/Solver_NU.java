@@ -118,22 +118,17 @@ public class Solver_NU extends Solver {
 
 	@Override
 	void do_shrinking() {
-		double Gmax1 = -Double.POSITIVE_INFINITY; // max { -y_i * grad(f)_i |
-													// y_i = +1, i in
-		// I_up(\alpha) }
-		double Gmax2 = -Double.POSITIVE_INFINITY; // max { y_i * grad(f)_i | y_i
-													// = +1, i in
-		// I_low(\alpha) }
-		double Gmax3 = -Double.POSITIVE_INFINITY; // max { -y_i * grad(f)_i |
-													// y_i = -1, i in
-		// I_up(\alpha) }
-		double Gmax4 = -Double.POSITIVE_INFINITY; // max { y_i * grad(f)_i | y_i
-													// = -1, i in
-		// I_low(\alpha) }
+		double Gmax1 = -Double.POSITIVE_INFINITY;
+		// max { -y_i * grad(f)_i | y_i = +1, i in I_up(\alpha) }
+		double Gmax2 = -Double.POSITIVE_INFINITY;
+		// max { y_i * grad(f)_i | y_i = +1, i in I_low(\alpha) }
+		double Gmax3 = -Double.POSITIVE_INFINITY;
+		// max { -y_i * grad(f)_i | y_i = -1, i in I_up(\alpha) }
+		double Gmax4 = -Double.POSITIVE_INFINITY;
+		// max { y_i * grad(f)_i | y_i = -1, i in I_low(\alpha) }
 
 		// find maximal violating pair first
-		int i;
-		for (i = 0; i < active_size; i++) {
+		for (int i = 0; i < active_size; i++) {
 			if (!is_upper_bound(i)) {
 				if (y[i] == +1) {
 					if (-G[i] > Gmax1) {
@@ -161,7 +156,7 @@ public class Solver_NU extends Solver {
 			active_size = l;
 		}
 
-		for (i = 0; i < active_size; i++) {
+		for (int i = 0; i < active_size; i++) {
 			if (be_shrunk(i, Gmax1, Gmax2, Gmax3, Gmax4)) {
 				for (active_size--; active_size > i; active_size--) {
 					if (!be_shrunk(active_size, Gmax1, Gmax2, Gmax3, Gmax4)) {
@@ -175,9 +170,9 @@ public class Solver_NU extends Solver {
 
 	@Override
 	double calculate_rho() {
-		int nr_free1 = 0, nr_free2 = 0;
 		double ub1 = Double.POSITIVE_INFINITY, ub2 = Double.POSITIVE_INFINITY;
 		double lb1 = -Double.POSITIVE_INFINITY, lb2 = -Double.POSITIVE_INFINITY;
+		int nr_free1 = 0, nr_free2 = 0;
 		double sum_free1 = 0, sum_free2 = 0;
 
 		for (int i = 0; i < active_size; i++) {

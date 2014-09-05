@@ -14,10 +14,6 @@ public abstract class AbstractSingleSVM<T> {
 	protected int shrinking;
 	protected double cache_size;
 
-	// Output variables
-	public double[] alpha;
-	public double rho;
-
 	public AbstractSingleSVM(double eps, int shrinking, double cache_size) {
 		this.eps = eps;
 		this.shrinking = shrinking;
@@ -27,33 +23,32 @@ public abstract class AbstractSingleSVM<T> {
 	abstract protected Solver.SolutionInfo solve(DataSet<T> x,
 			KernelFunction<? super T> kernel_function);
 
-	protected void train_one(DataSet<T> x,
+	protected Solver.SolutionInfo train_one(DataSet<T> x,
 			KernelFunction<? super T> kernel_function) {
-		final int l = x.size();
-		alpha = new double[l];
 		Solver.SolutionInfo si = solve(x, kernel_function);
-		rho = si.rho;
 
 		if (getLogger().isLoggable(Level.INFO)) {
-			getLogger().info("obj = " + si.obj + ", rho = " + si.rho + "\n");
-		}
+			StringBuilder buf = new StringBuilder();
+			buf.append("obj = ").append(si.obj);
+			buf.append(", rho = ").append(si.rho).append("\n");
 
-		// output SVs
-
-		int nSV = 0;
-		int nBSV = 0;
-		for (int i = 0; i < l; i++) {
-			if (Math.abs(alpha[i]) > 0) {
-				++nSV;
-				if (Math.abs(alpha[i]) >= ((x.value(i) > 0) ? si.upper_bound_p
-						: si.upper_bound_n))
-					++nBSV;
+			// output SV counts
+			int nSV = 0, nBSV = 0;
+			for (int i = 0, l = x.size(); i < l; i++) {
+				double a_i = Math.abs(si.alpha[i]);
+				if (a_i > 0) {
+					++nSV;
+					if (a_i >= ((x.value(i) > 0) ? si.upper_bound_p
+							: si.upper_bound_n)) {
+						++nBSV;
+					}
+				}
 			}
+			buf.append("nSV = ").append(nSV);
+			buf.append(", nBSV = ").append(nBSV);
+			getLogger().info(buf.toString());
 		}
-
-		if (getLogger().isLoggable(Level.INFO)) {
-			getLogger().info("nSV = " + nSV + ", nBSV = " + nBSV + "\n");
-		}
+		return si;
 	}
 
 	abstract protected Logger getLogger();
@@ -73,8 +68,9 @@ public abstract class AbstractSingleSVM<T> {
 	public static int[] shuffledIndex(int[] perm, int l) {
 		Random rand = new Random();
 		// Shuffle data set.
-		for (int i = 0; i < l; i++)
+		for (int i = 0; i < l; i++) {
 			perm[i] = i;
+		}
 		for (int i = 0; i < l; i++) {
 			int j = i + rand.nextInt(l - i);
 			ArrayUtil.swap(perm, i, j);
@@ -95,11 +91,8 @@ public abstract class AbstractSingleSVM<T> {
 		int[] fold_start = new int[nr_fold + 1];
 
 		int[][] group_ret = new int[3][];
-
 		int nr_class = groupClasses(x, group_ret, perm);
-
-		int[] start = group_ret[1];
-		int[] count = group_ret[2];
+		int[] start = group_ret[1], count = group_ret[2];
 
 		Random rand = new Random();
 		// random shuffle and then data grouped by fold using the array perm
@@ -165,6 +158,7 @@ public abstract class AbstractSingleSVM<T> {
 			}
 			data_label[i] = j;
 			if (j == nr_class) {
+				// Resize when necessary
 				if (nr_class == label.length) {
 					label = Arrays.copyOf(label, label.length << 1);
 					count = Arrays.copyOf(count, count.length << 1);
@@ -203,9 +197,14 @@ public abstract class AbstractSingleSVM<T> {
 			start[i] = start[i - 1] + count[i - 1];
 		}
 
+		// Fill return array:
 		group_ret[0] = label;
 		group_ret[1] = start;
 		group_ret[2] = count;
 		return nr_class;
+	}
+
+	public static boolean nonzero(double v) {
+		return v > 0. || v < 0.;
 	}
 }

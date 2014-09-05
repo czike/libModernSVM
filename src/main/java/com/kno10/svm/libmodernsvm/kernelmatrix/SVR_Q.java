@@ -3,11 +3,11 @@ package com.kno10.svm.libmodernsvm.kernelmatrix;
 import com.kno10.svm.libmodernsvm.ArrayUtil;
 import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
-import com.kno10.svm.libmodernsvm.variants.SVR_Epsilon;
-import com.kno10.svm.libmodernsvm.variants.SVR_Nu;
+import com.kno10.svm.libmodernsvm.variants.EpsilonSVR;
+import com.kno10.svm.libmodernsvm.variants.NuSVR;
 
 /**
- * Q matrix used for regression by {@link SVR_Epsilon} and {@link SVR_Nu}.
+ * Q matrix used for regression by {@link EpsilonSVR} and {@link NuSVR}.
  *
  * @param <T>
  */

@@ -11,10 +11,11 @@ import java.util.regex.Pattern;
 import com.kno10.svm.libmodernsvm.data.ByteWeightedArrayDataSet;
 import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
+import com.kno10.svm.libmodernsvm.kernelfunction.sparsevec.LinearKernelFunction;
+import com.kno10.svm.libmodernsvm.kernelfunction.sparsevec.SparseVector;
 import com.kno10.svm.libmodernsvm.model.ClassificationModel;
-import com.kno10.svm.libmodernsvm.sparsevec.LinearKernelFunction;
-import com.kno10.svm.libmodernsvm.sparsevec.SparseVector;
-import com.kno10.svm.libmodernsvm.variants.SVC_C;
+import com.kno10.svm.libmodernsvm.variants.CSVC;
+import com.kno10.svm.libmodernsvm.variants.NuSVC;
 
 /**
  * Simple application for debugging training.
@@ -35,8 +36,8 @@ public class SimpleTrainApp {
 			KernelFunction<SparseVector> kf = new LinearKernelFunction();
 			System.err.println("Data set size: " + data.size());
 			ClassificationModel<SparseVector> m;
-			m = new SVC_C<SparseVector>(0.1, 1, 100).train(data, kf, null);
-			// m = new SVC_Nu<SparseVector>(0.1, 1, 100, .5).train(data, kf, null);
+			// m = new CSVC<SparseVector>(0.1, 1, 100).train(data, kf, null);
+			m = new NuSVC<SparseVector>(0.1, 1, 100, .5).train(data, kf, null);
 			System.err.println(m.l + " " + m.nr_class + " " + m.SV.size());
 			
 			writeModel(new FileOutputStream(args[1]), m);

@@ -1,4 +1,6 @@
-package com.kno10.svm.libmodernsvm.kernelfunction;
+package com.kno10.svm.libmodernsvm.kernelfunction.libsvm;
+
+import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 
 
 public abstract class AbstractKernelFunction implements KernelFunction<SparseVectorEntry[]> {

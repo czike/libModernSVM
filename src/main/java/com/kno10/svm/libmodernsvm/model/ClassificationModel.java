@@ -10,17 +10,19 @@ public class ClassificationModel<T> extends Model<T> {
 
 	public int predict(T x, KernelFunction<? super T> kf, double[] dec_values) {
 		double[] kvalue = new double[l];
-		for (int i = 0; i < l; i++)
+		for (int i = 0; i < l; i++) {
 			kvalue[i] = kf.similarity(x, SV.get(i));
+		}
 
 		int[] start = new int[nr_class];
-		for (int i = 1; i < nr_class; i++)
+		for (int i = 1; i < nr_class; i++) {
 			start[i] = start[i - 1] + nSV[i - 1];
+		}
 
 		int[] vote = new int[nr_class];
 
 		int p = 0;
-		for (int i = 0; i < nr_class; i++)
+		for (int i = 0; i < nr_class; i++) {
 			for (int j = i + 1; j < nr_class; j++, p++) {
 				double sum = 0;
 				int si = start[i], sj = start[j];
@@ -37,28 +39,33 @@ public class ClassificationModel<T> extends Model<T> {
 
 				vote[(sum > 0) ? i : j]++;
 			}
+		}
 
 		int vote_max_idx = 0;
-		for (int i = 1; i < nr_class; i++)
-			if (vote[i] > vote[vote_max_idx])
+		for (int i = 1; i < nr_class; i++) {
+			if (vote[i] > vote[vote_max_idx]) {
 				vote_max_idx = i;
+			}
+		}
 
 		return label[vote_max_idx];
 	}
 
 	public int predict(T x, KernelFunction<? super T> kf) {
 		double[] kvalue = new double[l];
-		for (int i = 0; i < l; i++)
+		for (int i = 0; i < l; i++) {
 			kvalue[i] = kf.similarity(x, SV.get(i));
+		}
 
 		int[] start = new int[nr_class];
-		for (int i = 1; i < nr_class; i++)
+		for (int i = 1; i < nr_class; i++) {
 			start[i] = start[i - 1] + nSV[i - 1];
+		}
 
 		int[] vote = new int[nr_class];
 
 		int p = 0;
-		for (int i = 0; i < nr_class; i++)
+		for (int i = 0; i < nr_class; i++) {
 			for (int j = i + 1; j < nr_class; j++, p++) {
 				double sum = 0;
 				int si = start[i], sj = start[j];
@@ -66,19 +73,24 @@ public class ClassificationModel<T> extends Model<T> {
 
 				double[] coef1 = sv_coef[j - 1];
 				double[] coef2 = sv_coef[i];
-				for (int k = 0; k < ci; k++)
+				for (int k = 0; k < ci; k++) {
 					sum += coef1[si + k] * kvalue[si + k];
-				for (int k = 0; k < cj; k++)
+				}
+				for (int k = 0; k < cj; k++) {
 					sum += coef2[sj + k] * kvalue[sj + k];
+				}
 				sum -= rho[p];
 
 				vote[(sum > 0) ? i : j]++;
 			}
+		}
 
 		int vote_max_idx = 0;
-		for (int i = 1; i < nr_class; i++)
-			if (vote[i] > vote[vote_max_idx])
+		for (int i = 1; i < nr_class; i++) {
+			if (vote[i] > vote[vote_max_idx]) {
 				vote_max_idx = i;
+			}
+		}
 
 		return label[vote_max_idx];
 	}

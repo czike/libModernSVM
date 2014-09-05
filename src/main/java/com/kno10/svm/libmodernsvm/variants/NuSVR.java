@@ -7,11 +7,11 @@ import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.SVR_Q;
 
-public class SVR_Nu<T> extends AbstractSVR<T> {
-	private static final Logger LOG = Logger.getLogger(SVR_Nu.class.getName());
+public class NuSVR<T> extends AbstractSVR<T> {
+	private static final Logger LOG = Logger.getLogger(NuSVR.class.getName());
 	protected double nu, C;
 
-	public SVR_Nu(double eps, int shrinking, double cache_size, double C,
+	public NuSVR(double eps, int shrinking, double cache_size, double C,
 			double nu) {
 		super(eps, shrinking, cache_size);
 		this.nu = nu;
@@ -43,11 +43,11 @@ public class SVR_Nu<T> extends AbstractSVR<T> {
 				y, alpha2, C, C, eps, shrinking);
 
 		if (LOG.isLoggable(Level.INFO)) {
-			LOG.info("epsilon = " + (-si.r) + "\n");
+			LOG.info("epsilon = " + (-si.r));
 		}
 
 		for (int i = 0; i < l; i++) {
-			alpha[i] = alpha2[i] - alpha2[i + l];
+			si.alpha[i] = alpha2[i] - alpha2[i + l];
 		}
 		return si;
 	}

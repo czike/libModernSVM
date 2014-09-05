@@ -8,16 +8,16 @@ import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.kernelmatrix.SVC_Q;
 
 /**
- * Regularized SVM based classification (C-SVC).
+ * Regularized SVM based classification (C-SVC, C-SVM).
  *
  * @param <T>
  */
-public class SVC_C<T> extends AbstractSVC<T> {
-	private static final Logger LOG = Logger.getLogger(SVC_C.class.getName());
+public class CSVC<T> extends AbstractSVC<T> {
+	private static final Logger LOG = Logger.getLogger(CSVC.class.getName());
 
 	double Cp = 1., Cn = 1.;
 
-	public SVC_C(double eps, int shrinking, double cache_size) {
+	public CSVC(double eps, int shrinking, double cache_size) {
 		super(eps, shrinking, cache_size);
 	}
 
@@ -34,8 +34,8 @@ public class SVC_C<T> extends AbstractSVC<T> {
 		double[] minus_ones = new double[l];
 		byte[] y = new byte[l];
 
+		double[] alpha = new double[l];
 		for (int i = 0; i < l; i++) {
-			alpha[i] = 0;
 			minus_ones[i] = -1;
 			y[i] = (byte) ((x.value(i) > 0) ? +1 : -1);
 		}
@@ -47,16 +47,14 @@ public class SVC_C<T> extends AbstractSVC<T> {
 		if (Cp == Cn && LOG.isLoggable(Level.INFO)) {
 			double sum_alpha = 0;
 			for (int i = 0; i < l; i++) {
-				sum_alpha += alpha[i];
+				sum_alpha += si.alpha[i];
 			}
 
-			if (LOG.isLoggable(Level.INFO)) {
-				LOG.info("nu = " + sum_alpha / (Cp * l) + "\n");
-			}
+			LOG.info("nu = " + sum_alpha / (Cp * l));
 		}
 
 		for (int i = 0; i < l; i++) {
-			alpha[i] *= y[i];
+			si.alpha[i] *= y[i];
 		}
 		return si;
 	}
