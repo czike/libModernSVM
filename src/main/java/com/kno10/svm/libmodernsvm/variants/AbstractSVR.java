@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.data.DoubleWeightedArrayDataSet;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
+import com.kno10.svm.libmodernsvm.model.ProbabilisticRegressionModel;
 import com.kno10.svm.libmodernsvm.model.RegressionModel;
 
 public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
@@ -13,10 +14,17 @@ public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
 		super(eps, shrinking, cache_size);
 	}
 
-	public RegressionModel<T> make_model(DataSet<T> x) {
+	public RegressionModel<T> make_model(DataSet<T> x, double[] probA) {
 		final int l = x.size();
 		// TODO: re-add probability support
-		RegressionModel<T> model = new RegressionModel<T>();
+		RegressionModel<T> model;
+		if (probA == null) {
+			model = new RegressionModel<T>();
+		} else {
+			ProbabilisticRegressionModel<T> pm = new ProbabilisticRegressionModel<T>();
+			pm.probA = probA;
+			model = pm;
+		}
 		model.nr_class = 2;
 		model.sv_coef = new double[1][];
 		model.rho = new double[1];
@@ -43,45 +51,40 @@ public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
 		return model;
 	}
 
-	// Stratified cross validation
-	public void svm_cross_validation_regression(DataSet<T> x,
-			KernelFunction<? super T> kf, int nr_fold, double[] target) {
+	// Perform cross-validation.
+	public void cross_validation(DataSet<T> x, KernelFunction<? super T> kf,
+			int nr_fold, double[] target) {
 		final int l = x.size();
-		int[] fold_start = new int[nr_fold + 1];
 		int[] perm = shuffledIndex(new int[l], l);
 		// Split into folds
-		for (int i = 0; i <= nr_fold; i++) {
-			fold_start[i] = i * l / nr_fold;
-		}
+		int[] fold_start = makeFolds(l, nr_fold);
 
+		DataSet<T> newx = new DoubleWeightedArrayDataSet<T>(l);
 		for (int i = 0; i < nr_fold; i++) {
-			int begin = fold_start[i];
-			int end = fold_start[i + 1];
+			final int begin = fold_start[i], end = fold_start[i + 1];
 
-			final int newl = l - (end - begin);
-			DataSet<T> newx = new DoubleWeightedArrayDataSet<T>(newl);
-
+			newx.clear();
 			for (int j = 0; j < begin; ++j) {
 				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
 			for (int j = end; j < l; ++j) {
 				newx.add(x.get(perm[j]), x.value(perm[j]));
 			}
-			RegressionModel<T> submodel = svm_train_regression(newx, kf);
+			RegressionModel<T> submodel = train(newx, kf);
 			for (int j = begin; j < end; j++) {
 				target[perm[j]] = submodel.predict(x.get(perm[j]), kf);
 			}
 		}
 	}
 
-	private double svm_svr_probability(DataSet<T> x,
-			KernelFunction<? super T> kf, double[] probA) {
+	private double svr_probability(DataSet<T> x, KernelFunction<? super T> kf,
+			double[] probA) {
 		final int l = x.size();
 		int nr_fold = 5;
 
 		double[] ymv = new double[l];
 		double mae = 0;
-		svm_cross_validation_regression(x, kf, nr_fold, ymv);
+		cross_validation(x, kf, nr_fold, ymv);
 		for (int i = 0; i < l; i++) {
 			ymv[i] = x.value(i) - ymv[i];
 			mae += Math.abs(ymv[i]);
@@ -108,15 +111,14 @@ public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
 
 	boolean probability = false;
 
-	public RegressionModel<T> svm_train_regression(DataSet<T> x,
-			KernelFunction<? super T> kf) {
-		// FIXME: Probability support is incomplete.
+	public RegressionModel<T> train(DataSet<T> x, KernelFunction<? super T> kf) {
+		double[] probA = null;
 		if (probability) {
-			double[] probA = new double[1];
-			probA[0] = svm_svr_probability(x, kf, probA);
+			probA = new double[1];
+			probA[0] = svr_probability(x, kf, probA);
 		}
 
-		svm_train_one(x, kf);
-		return make_model(x);
+		train_one(x, kf);
+		return make_model(x, probA);
 	}
 }

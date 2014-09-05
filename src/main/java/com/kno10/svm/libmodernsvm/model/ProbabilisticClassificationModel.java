@@ -20,19 +20,22 @@ public class ProbabilisticClassificationModel<T> extends ClassificationModel<T> 
 		double min_prob = 1e-7;
 		double[][] pairwise_prob = new double[nr_class][nr_class];
 
-		for (int i = 0, k = 0; i < nr_class; i++)
+		for (int i = 0, k = 0; i < nr_class; i++) {
 			for (int j = i + 1; j < nr_class; j++, k++) {
 				pairwise_prob[i][j] = Math.min(Math.max(
 						sigmoid_predict(dec_values[k], probA[k], probB[k]),
 						min_prob), 1 - min_prob);
 				pairwise_prob[j][i] = 1 - pairwise_prob[i][j];
 			}
+		}
 		multiclass_probability(nr_class, pairwise_prob, prob_estimates);
 
 		int prob_max_idx = 0;
-		for (int i = 1; i < nr_class; i++)
-			if (prob_estimates[i] > prob_estimates[prob_max_idx])
+		for (int i = 1; i < nr_class; i++) {
+			if (prob_estimates[i] > prob_estimates[prob_max_idx]) {
 				prob_max_idx = i;
+			}
+		}
 		return label[prob_max_idx];
 	}
 
@@ -97,8 +100,9 @@ public class ProbabilisticClassificationModel<T> extends ClassificationModel<T> 
 					p[j] /= (1 + diff);
 				}
 			}
-			if (iter >= max_iter)
+			if (iter >= max_iter) {
 				LOG.info("Exceeds max_iter in multiclass_prob\n");
+			}
 		}
 	}
 
