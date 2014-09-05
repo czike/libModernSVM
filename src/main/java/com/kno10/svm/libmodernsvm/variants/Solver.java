@@ -1,5 +1,6 @@
 package com.kno10.svm.libmodernsvm.variants;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.kno10.svm.libmodernsvm.ArrayUtil;
@@ -137,6 +138,12 @@ public class Solver {
 	SolutionInfo solve(int l, QMatrix Q, double[] p_, byte[] y_,
 			double[] alpha_, double Cp, double Cn, double eps, int shrinking) {
 		SolutionInfo si = new SolutionInfo();
+		solve(si, l, Q, p_, y_, alpha_, Cp, Cn, eps, shrinking);
+		return si;
+	}
+
+	void solve(SolutionInfo si, int l, QMatrix Q, double[] p_, byte[] y_,
+			double[] alpha_, double Cp, double Cn, double eps, int shrinking) {
 		this.l = l;
 		this.Q = Q;
 		QD = Q.get_QD();
@@ -175,7 +182,8 @@ public class Solver {
 		int counter = Math.min(l, 1000) + 1;
 		int[] working_set = new int[2];
 
-		for (int iter = 0; iter < max_iter; ++iter) {
+		int iter;
+		for (iter = 0; iter < max_iter; ++iter) {
 			// show progress and do shrinking
 
 			if (--counter == 0) {
@@ -298,6 +306,9 @@ public class Solver {
 						.print("\nWARNING: reaching max number of iterations\n");
 			}
 		}
+		if (LOG.isLoggable(Level.INFO)) {
+			LOG.info("optimization finished, #iter = " + iter);
+		}
 
 		// calculate rho
 		si.rho = calculate_rho();
@@ -312,7 +323,6 @@ public class Solver {
 
 		si.upper_bound_p = Cp;
 		si.upper_bound_n = Cn;
-		return si;
 	}
 
 	private void update_G_bar(double C_i, float[] Q_i, int l) {

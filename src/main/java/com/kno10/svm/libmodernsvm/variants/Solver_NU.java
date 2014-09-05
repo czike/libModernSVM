@@ -9,10 +9,10 @@ public class Solver_NU extends Solver {
 	private SolutionInfo si;
 
 	@Override
-	SolutionInfo solve(int l, QMatrix Q, double[] p, byte[] y, double[] alpha,
-			double Cp, double Cn, double eps, int shrinking) {
-		this.si = super.solve(l, Q, p, y, alpha, Cp, Cn, eps, shrinking);
-		return si;
+	void solve(SolutionInfo si, int l, QMatrix Q, double[] p, byte[] y,
+			double[] alpha, double Cp, double Cn, double eps, int shrinking) {
+		this.si = si;
+		super.solve(si, l, Q, p, y, alpha, Cp, Cn, eps, shrinking);
 	}
 
 	@Override
