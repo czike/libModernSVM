@@ -9,9 +9,9 @@ public interface QMatrix {
 	 * 
 	 * @param column Column number
 	 * @param len Number of entries to get
-	 * @return Similarity values
+	 * @param out Output array for similarity values
 	 */
-	float[] get_Q(int column, int len);
+	void get_Q(int column, int len, float[] out);
 
 	/**
 	 * Get the diagonal values, as reference.

@@ -14,7 +14,7 @@ public abstract class KernelWithQD<T> extends Kernel<T> {
 		final int l = x.size();
 		QD = new double[l];
 		for (int i = 0; i < l; i++) {
-			QD[i] = kernel_function(i, i);
+			QD[i] = similarity(i, i);
 		}
 	}
 

@@ -117,8 +117,9 @@ public class Solver {
 		}
 
 		if (nr_free * l > 2 * active_size * (l - active_size)) {
+		  float[] Q_i = new float[active_size];
 			for (int i = active_size; i < l; i++) {
-				float[] Q_i = Q.get_Q(i, active_size);
+				Q.get_Q(i, active_size, Q_i);
 				for (int j = 0; j < active_size; j++) {
 					if (is_free(j)) {
 						G[i] += alpha[j] * Q_i[j];
@@ -126,9 +127,10 @@ public class Solver {
 				}
 			}
 		} else {
+      float[] Q_i = new float[l];
 			for (int i = 0; i < active_size; i++) {
 				if (is_free(i)) {
-					float[] Q_i = Q.get_Q(i, l);
+					Q.get_Q(i, l, Q_i);
 					double alpha_i = alpha[i];
 					for (int j = active_size; j < l; j++) {
 						G[j] += alpha_i * Q_i[j];
@@ -211,8 +213,10 @@ public class Solver {
 
 			// update alpha[i] and alpha[j], handle bounds carefully
 
-			float[] Q_i = Q.get_Q(i, active_size);
-			float[] Q_j = Q.get_Q(j, active_size);
+			float[] Q_i = new float[active_size];
+			Q.get_Q(i, active_size, Q_i);
+			float[] Q_j = new float[active_size];
+			Q.get_Q(j, active_size, Q_j);
 
 			double C_i = get_C(i), C_j = get_C(j);
 
@@ -341,9 +345,10 @@ public class Solver {
 			G[i] = p[i];
 			G_bar[i] = 0;
 		}
+		float[] Q_i = new float[l];
 		for (int i = 0; i < l; i++) {
 			if (!is_lower_bound(i)) {
-				float[] Q_i = Q.get_Q(i, l);
+				Q.get_Q(i, l, Q_i);
 				double alpha_i = alpha[i];
 				for (int j = 0; j < l; j++) {
 					G[j] += alpha_i * Q_i[j];
@@ -402,7 +407,8 @@ public class Solver {
 		int i = Gmax_idx;
 		float[] Q_i = null;
 		if (i != -1) { // null Q_i not accessed: Gmax=-INF if i=-1
-			Q_i = Q.get_Q(i, active_size);
+		  Q_i = new float[active_size];
+			Q.get_Q(i, active_size, Q_i);
 		}
 
 		for (int j = 0; j < active_size; j++) {

@@ -52,10 +52,12 @@ public class Solver_NU extends Solver {
 		int ip = Gmaxp_idx, in = Gmaxn_idx;
 		float[] Q_ip = null, Q_in = null;
 		if (ip != -1) { // null Q_ip not accessed: Gmaxp=-INF if ip=-1
-			Q_ip = Q.get_Q(ip, active_size);
+			Q_ip = new float[active_size];
+			Q.get_Q(ip, active_size, Q_ip);
 		}
 		if (in != -1) {
-			Q_in = Q.get_Q(in, active_size);
+			Q_in = new float[active_size];
+			Q.get_Q(in, active_size, Q_in);
 		}
 
 		for (int j = 0; j < active_size; j++) {

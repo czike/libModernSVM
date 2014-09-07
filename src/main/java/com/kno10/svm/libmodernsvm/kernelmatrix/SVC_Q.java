@@ -22,7 +22,7 @@ public class SVC_Q<T> extends KernelWithQD<T> {
 
 	@Override
 	public double similarity(int i, int j) {
-		return y[i] * y[j] * kernel_function(i, j);
+		return y[i] * y[j] * super.similarity(i, j);
 	}
 
 	@Override
