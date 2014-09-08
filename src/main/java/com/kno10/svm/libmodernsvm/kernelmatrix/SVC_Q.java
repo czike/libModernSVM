@@ -11,22 +11,24 @@ import com.kno10.svm.libmodernsvm.variants.NuSVC;
  *
  * @param <T>
  */
-public class SVC_Q<T> extends KernelWithQD<T> {
-  private final byte[] y;
+public class SVC_Q extends Kernel {
+  public <T> SVC_Q(final DataSet<T> x, final KernelFunction<? super T> kf, double cache_size, final byte[] y) {
+    // TODO: clone y removal okay?
+    super(new Cache<T>(x.size(), (long) (cache_size * (1 << 20))) {
+      @Override
+      public double similarity(int i, int j) {
+        return y[i] * y[j] * kf.similarity(x.get(i), x.get(j));
+      }
 
-  public SVC_Q(DataSet<T> x, KernelFunction<? super T> kf, double cache_size, byte[] y) {
-    super(x, kf, cache_size);
-    this.y = y.clone();
-  }
-
-  @Override
-  public double similarity(int i, int j) {
-    return y[i] * y[j] * super.similarity(i, j);
-  }
-
-  @Override
-  public void swap_index(int i, int j) {
-    super.swap_index(i, j);
-    ArrayUtil.swap(y, i, j);
+      @Override
+      void swap_index(int i, int j) {
+        if(i == j) {
+          return;
+        }
+        super.swap_index(i, j);
+        x.swap(i, j);
+        ArrayUtil.swap(y, i, j);
+      }
+    }, x.size());
   }
 }

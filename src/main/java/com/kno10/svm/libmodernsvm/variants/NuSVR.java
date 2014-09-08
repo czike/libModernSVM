@@ -38,7 +38,7 @@ public class NuSVR<T> extends AbstractSVR<T> {
 			y[i + l] = -1;
 		}
 
-		SVR_Q<T> Q = new SVR_Q<T>(x, kernel_function, cache_size);
+		SVR_Q Q = new SVR_Q(x, kernel_function, cache_size);
 		Solver.SolutionInfo si = new Solver_NU().solve(2 * l, Q, linear_term,
 				y, alpha2, C, C, eps, shrinking);
 

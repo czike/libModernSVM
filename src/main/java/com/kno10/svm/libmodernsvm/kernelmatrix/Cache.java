@@ -1,8 +1,6 @@
 package com.kno10.svm.libmodernsvm.kernelmatrix;
 
 import com.kno10.svm.libmodernsvm.ArrayUtil;
-import com.kno10.svm.libmodernsvm.data.DataSet;
-import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 
 //
 // Kernel Cache
@@ -15,8 +13,8 @@ import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
  * stylish, and probably not half as effective on Java due to garbage
  * collection.
  */
-class Cache<T> {
-  private final int l;
+public abstract class Cache<T> {
+  private static final long MEGABYTES = 1 << 20;
 
   private long size;
 
@@ -32,22 +30,21 @@ class Cache<T> {
 
   private head_t lru_head;
 
-  private final DataSet<T> x;
+  public Cache(int l, double cache_size) {
+    this(l, (long) (cache_size * MEGABYTES));
+  }
 
-  private final KernelFunction<? super T> kf;
-
-  public Cache(DataSet<T> x_, KernelFunction<? super T> kf_, long size_) {
-    this.x = x_;
-    this.kf = kf_;
-    this.l = x.size();
+  public Cache(int l, long size_) {
     head = new head_t[l];
     for(int i = 0; i < l; i++) {
       head[i] = new head_t();
     }
-    size = size_ >> 2;
-    size -= l * (24 >> 2); // In Java, we need 24 bytes for the head object!
+    // 8 bytes chaining, 4 bytes len, 4 bytes data ref,
+    // + 4 bytes in head array + 8 bytes Java object overhead
+    size = size_ - l * 28;
+    size >>= 2; // Bytes to floats.
     // Minimum cache size is two columns:
-    size = Math.max(size, 2 * (long) l);
+    size = Math.max(size, 2 * l);
     lru_head = new head_t();
     lru_head.next = lru_head.prev = lru_head;
   }
@@ -66,18 +63,12 @@ class Cache<T> {
     h.next.prev = h;
   }
 
-  // request data [0,len)
-  // return some position p where [p,len) need to be filled
-  // (p >= len if nothing needs to be filled)
-  // java: simulate pointer using single-element array
-  int get_data(int index, float[][] data, int len) {
+  float[] get_data(int index, int len) {
     head_t h = head[index];
     if(h.len > 0) {
       lru_delete(h);
     }
-    int more = len - h.len;
-
-    int ret = h.len;
+    final int more = len - h.len;
     if(more > 0) {
       // free old space
       while(size < more) {
@@ -93,22 +84,25 @@ class Cache<T> {
       if(h.data != null) {
         System.arraycopy(h.data, 0, new_data, 0, h.len);
       }
+      // Compute missing distances:
+      for(int j = h.len; j < len; ++j) {
+        new_data[j] = (float) similarity(index, j);
+      }
       h.data = new_data;
       h.len = len;
       size -= more;
     }
 
-    lru_insert(h);
-    data[0] = h.data;
-    return ret;
+    if(h.len > 0) {
+      lru_insert(h);
+    }
+    return h.data;
   }
 
   void swap_index(int i, int j) {
     if(i == j) {
       return;
     }
-    // Swap in data set:
-    x.swap(i, j);
     // Swap in index:
     ArrayUtil.swap(head, i, j);
 
@@ -135,7 +129,5 @@ class Cache<T> {
     }
   }
 
-  public double similarity(int i, int j) {
-    return kf.similarity(x.get(i), x.get(j));
-  }
+  abstract public double similarity(int i, int j);
 }

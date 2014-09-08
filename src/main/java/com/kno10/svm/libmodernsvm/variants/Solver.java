@@ -1,5 +1,6 @@
 package com.kno10.svm.libmodernsvm.variants;
 
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,6 +56,8 @@ public class Solver {
   int[] active_set;
 
   double[] G_bar; // gradient, if we treat free variables as 0
+  
+  float[] Q_i, Q_j;
 
   int l;
 
@@ -138,7 +141,6 @@ public class Solver {
     }
 
     if(nr_free * l > 2 * active_size * (l - active_size)) {
-      float[] Q_i = new float[active_size];
       for(int i = active_size; i < l; i++) {
         Q.get_Q(i, active_size, Q_i);
         for(int j = 0; j < active_size; j++) {
@@ -149,7 +151,6 @@ public class Solver {
       }
     }
     else {
-      float[] Q_i = new float[l];
       for(int i = 0; i < active_size; i++) {
         if(is_free(i)) {
           Q.get_Q(i, l, Q_i);
@@ -179,6 +180,8 @@ public class Solver {
     this.Cn = Cn;
     this.eps = eps;
     this.unshrink = false;
+    this.Q_i = new float[l];
+    this.Q_j = new float[l];
 
     // initialize alpha_status
     {
@@ -206,7 +209,6 @@ public class Solver {
     int counter = Math.min(l, 1000) + 1;
     int[] working_set = new int[2];
 
-    float[] Q_i = new float[l], Q_j = new float[l];
     int iter;
     for(iter = 0; iter < max_iter; ++iter) {
       // show progress and do shrinking
@@ -361,13 +363,8 @@ public class Solver {
   }
 
   public void initializeGradient() {
-    G = new double[l];
+    G = Arrays.copyOf(p, l);
     G_bar = new double[l];
-    for(int i = 0; i < l; i++) {
-      G[i] = p[i];
-      G_bar[i] = 0;
-    }
-    float[] Q_i = new float[l];
     for(int i = 0; i < l; i++) {
       if(!is_lower_bound(i)) {
         Q.get_Q(i, l, Q_i);
@@ -428,9 +425,7 @@ public class Solver {
     }
 
     int i = Gmax_idx;
-    float[] Q_i = null;
     if(i != -1) { // null Q_i not accessed: Gmax=-INF if i=-1
-      Q_i = new float[active_size];
       Q.get_Q(i, active_size, Q_i);
     }
 

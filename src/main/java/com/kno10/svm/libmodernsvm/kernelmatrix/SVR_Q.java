@@ -14,21 +14,16 @@ import com.kno10.svm.libmodernsvm.variants.NuSVR;
  *
  * @param <T>
  */
-public class SVR_Q<T> extends Kernel<T> {
+public class SVR_Q extends Kernel {
   private final int l;
 
   private final byte[] sign;
 
   private final int[] index;
 
-  private final double[] QD;
-
-  private final float[] tmp;
-
-  public SVR_Q(DataSet<T> x, KernelFunction<? super T> kf, double cache_size) {
-    super(x, kf, cache_size);
+  public <T> SVR_Q(DataSet<T> x, KernelFunction<? super T> kf, double cache_size) {
+    super(new KernelCache<T>(x, kf, cache_size), x.size());
     this.l = x.size();
-    QD = new double[l << 1];
     sign = new byte[l << 1];
     index = new int[l << 1];
     for(int k = 0, k2 = l; k < l; k++, k2++) {
@@ -36,10 +31,17 @@ public class SVR_Q<T> extends Kernel<T> {
       sign[k2] = -1;
       index[k] = k;
       index[k2] = k;
-      QD[k] = similarity(k, k);
+    }
+  }
+
+  @Override
+  protected double[] initializeQD(int l) {
+    double[] QD = new double[l << 1];
+    for(int k = 0, k2 = l; k < l; k++, k2++) {
+      QD[k] = cache.similarity(k, k);
       QD[k2] = QD[k];
     }
-    this.tmp = new float[l];
+    return QD;
   }
 
   @Override
@@ -54,17 +56,12 @@ public class SVR_Q<T> extends Kernel<T> {
   public void get_Q(int i, int len, float[] out) {
     final int real_i = index[i];
     // From cache, not reordered; always get all l values!
-    super.get_Q(real_i, l, tmp);
+    float[] data = cache.get_data(real_i, l);
 
     // reorder and copy to output
     final byte si = sign[i];
     for(int j = 0; j < len; j++) {
-      out[j] = (float) si * sign[j] * tmp[index[j]];
+      out[j] = (float) si * sign[j] * data[index[j]];
     }
-  }
-
-  @Override
-  public double[] get_QD() {
-    return QD;
   }
 }
