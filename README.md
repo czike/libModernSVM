@@ -23,28 +23,24 @@ All accuracy evaluation was done with the C version.
 
 C-SVM          | libSVM (C) | libSVM (Java) | libModernSVM
 :--------------|-----------:| -------------:|-------------:
-Training time  |     89.32s |       138.78s |      103.16s
-Accuracy       |    84.022% |       84.022% |     84.0721%
-Accuracy (abs) |  3355/3993 |     3355/3993 |    3357/3993
-Total nSV      |      12771 |         12771 |        12371
+Training time  |     89.32s |       138.78s |      116.43s
+Accuracy       |    84.022% |       84.022% |      84.022%
+Accuracy (abs) |  3355/3993 |     3355/3993 |    3355/3993
+Total nSV      |      12771 |         12771 |        12771
 ---------------|------------| --------------|--------------
 nu-SVM         | libSVM (C) | libSVM (Java) | libModernSVM
 ---------------|------------| --------------|--------------
-Training time  |    163.40s |       264.00s |      219.12s
-Accuracy       |   81.5928% |      81.5928% |      81.693%
-Accuracy (abs) |  3258/3993 |     3258/3993 |    3262/3993
-Total nSV      |      14015 |         14015 |        13954
+Training time  |    163.40s |       264.00s |      221.17s
+Accuracy       |   81.5928% |      81.5928% |     81.5928%
+Accuracy (abs) |  3258/3993 |     3258/3993 |    3258/3993
+Total nSV      |      14015 |         14015 |        14015
 
-Interestingly enough, our runtime improved to about halfway between the C
-and the original Java version (this is substantial!) - but for some reason
-not yet clear, we also improved on result quality marginally by 2 samples!
-This needs further investigation.
+As desired, our runtime improved substantially (15-20% faster) over the
+original Java version, but we do not yet achieve the performance of the C version.
+As is, the results appear to be identical, when the parameters are chosen
+the same way (note that the current version does not have a command
+line version).
 
-The original Java version apparently returned exactly the same result as
-the C version, but our version also kept 400 fewer support vectors. So the
-good news so far are that this version is faster, more flexible, and yields
-a smaller (and thus faster at predicting) SVM. The bad news is, it's not clear
-whether this trend is consistent, and what caused it.
 
 Explanation of Performance Difference
 -------------------------------------
