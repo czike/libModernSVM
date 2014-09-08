@@ -5,24 +5,18 @@ import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 import com.kno10.svm.libmodernsvm.variants.QMatrix;
 
 public abstract class Kernel<T> implements QMatrix {
-	private DataSet<T> x;
-
-	private final Cache cache;
+	protected final Cache<T> cache;
 
 	abstract public double[] get_QD();
 
 	public void swap_index(int i, int j) {
-		x.swap(i, j);
 		// Swap in cache, too:
 		cache.swap_index(i, j);
 	}
 
-	KernelFunction<? super T> kf;
-
 	public Kernel(DataSet<T> x, KernelFunction<? super T> kf, double cache_size) {
-		this.kf = kf;
-		this.x = x; // FIXME: need to copy?
-		cache = new Cache(x.size(), (long) (cache_size * (1 << 20)));
+	  super();
+		cache = new Cache<T>(x, kf, (long) (cache_size * (1 << 20)));
 	}
 
 	public void get_Q(int i, int len, float[] out) {
@@ -38,6 +32,6 @@ public abstract class Kernel<T> implements QMatrix {
 
 	// Uncached similarity.
 	public double similarity(int i, int j) {
-		return kf.similarity(x.get(i), x.get(j));
+		return cache.similarity(i, j);
 	}
 }

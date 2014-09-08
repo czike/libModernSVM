@@ -17,7 +17,7 @@ public class OneClassSVM<T> extends AbstractSVR<T> {
 			.getName());
 	protected double nu;
 
-	public OneClassSVM(double eps, int shrinking, double cache_size, double nu) {
+	public OneClassSVM(double eps, boolean shrinking, double cache_size, double nu) {
 		super(eps, shrinking, cache_size);
 		this.nu = nu;
 	}

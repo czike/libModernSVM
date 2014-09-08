@@ -11,7 +11,7 @@ public class NuSVR<T> extends AbstractSVR<T> {
 	private static final Logger LOG = Logger.getLogger(NuSVR.class.getName());
 	protected double nu, C;
 
-	public NuSVR(double eps, int shrinking, double cache_size, double C,
+	public NuSVR(double eps, boolean shrinking, double cache_size, double C,
 			double nu) {
 		super(eps, shrinking, cache_size);
 		this.nu = nu;

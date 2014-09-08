@@ -10,7 +10,7 @@ import com.kno10.svm.libmodernsvm.model.ProbabilisticRegressionModel;
 import com.kno10.svm.libmodernsvm.model.RegressionModel;
 
 public abstract class AbstractSVR<T> extends AbstractSingleSVM<T> {
-	public AbstractSVR(double eps, int shrinking, double cache_size) {
+	public AbstractSVR(double eps, boolean shrinking, double cache_size) {
 		super(eps, shrinking, cache_size);
 	}
 

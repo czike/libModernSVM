@@ -12,7 +12,7 @@ public class EpsilonSVR<T> extends AbstractSVR<T> {
 			.getName());
 	protected double p, C;
 
-	public EpsilonSVR(double eps, int shrinking, double cache_size, double C,
+	public EpsilonSVR(double eps, boolean shrinking, double cache_size, double C,
 			double p) {
 		super(eps, shrinking, cache_size);
 		this.p = p;

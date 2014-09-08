@@ -11,10 +11,10 @@ import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
 
 public abstract class AbstractSingleSVM<T> {
 	protected double eps;
-	protected int shrinking;
+	protected boolean shrinking;
 	protected double cache_size;
 
-	public AbstractSingleSVM(double eps, int shrinking, double cache_size) {
+	public AbstractSingleSVM(double eps, boolean shrinking, double cache_size) {
 		this.eps = eps;
 		this.shrinking = shrinking;
 		this.cache_size = cache_size;

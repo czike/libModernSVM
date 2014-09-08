@@ -12,7 +12,7 @@ public class NuSVC<T> extends AbstractSVC<T> {
 
 	protected double nu;
 
-	public NuSVC(double eps, int shrinking, double cache_size, double nu) {
+	public NuSVC(double eps, boolean shrinking, double cache_size, double nu) {
 		super(eps, shrinking, cache_size);
 		this.nu = nu;
 	}

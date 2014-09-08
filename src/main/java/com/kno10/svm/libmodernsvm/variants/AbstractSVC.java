@@ -12,7 +12,7 @@ import com.kno10.svm.libmodernsvm.model.ProbabilisticClassificationModel;
 
 public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
 
-	public AbstractSVC(double eps, int shrinking, double cache_size) {
+	public AbstractSVC(double eps, boolean shrinking, double cache_size) {
 		super(eps, shrinking, cache_size);
 	}
 

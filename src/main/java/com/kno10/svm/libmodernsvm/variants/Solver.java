@@ -162,13 +162,13 @@ public class Solver {
     }
   }
 
-  SolutionInfo solve(int l, QMatrix Q, double[] p_, byte[] y_, double[] alpha_, double Cp, double Cn, double eps, int shrinking) {
+  SolutionInfo solve(int l, QMatrix Q, double[] p_, byte[] y_, double[] alpha_, double Cp, double Cn, double eps, boolean shrinking) {
     SolutionInfo si = new SolutionInfo(l);
     solve(si, l, Q, p_, y_, alpha_, Cp, Cn, eps, shrinking);
     return si;
   }
 
-  void solve(SolutionInfo si, int l, QMatrix Q, double[] p_, byte[] y_, double[] alpha_, double Cp, double Cn, double eps, int shrinking) {
+  void solve(SolutionInfo si, int l, QMatrix Q, double[] p_, byte[] y_, double[] alpha_, double Cp, double Cn, double eps, boolean shrinking) {
     this.l = l;
     this.Q = Q;
     this.QD = Q.get_QD();
@@ -213,7 +213,7 @@ public class Solver {
 
       if(--counter == 0) {
         counter = Math.min(l, 1000);
-        if(shrinking != 0) {
+        if(shrinking) {
           do_shrinking();
         }
       }

@@ -17,7 +17,7 @@ public class CSVC<T> extends AbstractSVC<T> {
 
 	double Cp = 1., Cn = 1.;
 
-	public CSVC(double eps, int shrinking, double cache_size) {
+	public CSVC(double eps, boolean shrinking, double cache_size) {
 		super(eps, shrinking, cache_size);
 	}
 
