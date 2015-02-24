@@ -12,12 +12,12 @@ public class UnsafeSparseVector {
   /**
    * Base address of the vectors memory
    */
-  protected final long address;
+  private final long address;
 
   /**
    * Length of the vector.
    */
-  protected final int size;
+  private final int size;
 
   /**
    * Memory requirement per integer.
@@ -39,6 +39,7 @@ public class UnsafeSparseVector {
    */
   static final Unsafe unsafe;
 
+  // Initialize the unsafe object
   static {
     try {
       // fetch theUnsafe object
@@ -54,6 +55,12 @@ public class UnsafeSparseVector {
     }
   }
 
+  /**
+   * Constructor
+   * 
+   * @param index Dimension indexes
+   * @param value Values
+   */
   public UnsafeSparseVector(int[] index, double[] value) {
     super();
     assert (index.length == value.length);
@@ -67,16 +74,57 @@ public class UnsafeSparseVector {
     }
   }
 
+  /**
+   * Java finalizer, frees the vector memory.
+   */
+  @Override
+  protected void finalize() throws Throwable {
+    unsafe.freeMemory(address);
+    super.finalize();
+  }
+
+  /**
+   * Number of valid entries in this sparse vector.
+   * 
+   * @return Size
+   */
+  public int size() {
+    return size;
+  }
+
+  /**
+   * Index at position i.
+   * 
+   * <i>Warning:</i> does not check bounds. This can crash your VM.
+   * 
+   * @param i Position
+   * @return Index
+   */
   public int index(int i) {
     assert (i >= 0 && i < size);
     return unsafe.getInt(address + BYTES_PER_ENTRY * i);
   }
 
+  /**
+   * Value at position i
+   *
+   * <i>Warning:</i> does not check bounds. This can crash your VM.
+   * 
+   * @param i Position
+   * @return Value
+   */
   public double value(int i) {
     assert (i >= 0 && i < size);
     return unsafe.getDouble(address + BYTES_PER_ENTRY * i + BYTES_PER_INDEX);
   }
 
+  /**
+   * Dot product of two vectors. Low level.
+   * 
+   * @param x First vector
+   * @param y Second vector
+   * @return Dot product
+   */
   public static double dot(UnsafeSparseVector x, UnsafeSparseVector y) {
     double sum = 0.;
     long addr1 = x.address, addr2 = y.address;
@@ -101,6 +149,13 @@ public class UnsafeSparseVector {
     return sum;
   }
 
+  /**
+   * Squared Euclidean distance of two vectors.
+   * 
+   * @param x First vector
+   * @param y Second vector
+   * @return Squared Euclidean distance
+   */
   public static double squareEuclidean(UnsafeSparseVector x, UnsafeSparseVector y) {
     double sum = 0.;
     long addr1 = x.address, addr2 = y.address;
@@ -142,9 +197,5 @@ public class UnsafeSparseVector {
       addr2 += BYTES_PER_VALUE;
     }
     return sum;
-  }
-
-  public int size() {
-    return size;
   }
 }
