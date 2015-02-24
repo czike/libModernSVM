@@ -60,12 +60,12 @@ public class UnsafeSparseVector {
    * 
    * @param index Dimension indexes
    * @param value Values
+   * @param size Number of valid components.
    */
-  public UnsafeSparseVector(int[] index, double[] value) {
+  public UnsafeSparseVector(int[] index, double[] value, int size) {
     super();
-    assert (index.length == value.length);
     long addr = this.address = unsafe.allocateMemory(index.length * BYTES_PER_ENTRY);
-    final int size = this.size = index.length;
+    this.size = size;
     for(int i = 0; i < size; i++) {
       unsafe.putInt(addr, index[i]);
       addr += BYTES_PER_INDEX;

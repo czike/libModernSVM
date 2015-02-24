@@ -38,4 +38,11 @@ The Java version published as part of libSVM is a literal port of C code to Java
 	<issueManagement>
 		<url>https://github.com/kno10/libModernSVM/issues</url>
 	</issueManagement>
+	<dependencies>
+		<dependency>
+			<groupId>org.javolution</groupId>
+			<artifactId>javolution-core-java</artifactId>
+			<version>6.0.0</version>
+		</dependency>
+	</dependencies>
 </project>
