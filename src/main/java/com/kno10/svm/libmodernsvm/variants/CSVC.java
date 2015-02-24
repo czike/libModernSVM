@@ -38,8 +38,8 @@ public class CSVC<T> extends AbstractSVC<T> {
       minus_ones[i] = -1;
       y[i] = (byte) ((x.value(i) > 0) ? +1 : -1);
     }
-
-    SVC_Q Q = new SVC_Q(x, kernel_function, cache_size, y);
+    // TODO: y.clone() is needed, or results get messed up.
+    SVC_Q Q = new SVC_Q(x, kernel_function, cache_size, y.clone());
     Solver.SolutionInfo si = new Solver().solve(l, Q, minus_ones, y, alpha, Cp, Cn, eps, shrinking);
 
     if(Cp == Cn && LOG.isLoggable(Level.INFO)) {
