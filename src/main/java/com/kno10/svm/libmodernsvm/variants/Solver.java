@@ -45,7 +45,7 @@ public class Solver {
 
   QMatrix Q;
 
-  //double[] QD;
+  // double[] QD;
 
   double eps;
 
@@ -56,7 +56,7 @@ public class Solver {
   int[] active_set;
 
   double[] G_bar; // gradient, if we treat free variables as 0
-  
+
   float[] Q_i, Q_j;
 
   int l;
@@ -94,15 +94,9 @@ public class Solver {
   // java: information about solution except alpha,
   // because we cannot return multiple values otherwise...
   static class SolutionInfo {
-    public SolutionInfo(int l) {
-      alpha = new double[l];
-    }
-
     double obj, rho;
 
     double upper_bound_p, upper_bound_n;
-
-    double r; // for Solver_NU
 
     double[] alpha;
   }
@@ -164,7 +158,7 @@ public class Solver {
   }
 
   SolutionInfo solve(int l, QMatrix Q, double[] p_, byte[] y_, double[] alpha_, double Cp, double Cn, double eps, boolean shrinking) {
-    SolutionInfo si = new SolutionInfo(l);
+    SolutionInfo si = new SolutionInfo();
     solve(si, l, Q, p_, y_, alpha_, Cp, Cn, eps, shrinking);
     return si;
   }
@@ -172,7 +166,7 @@ public class Solver {
   void solve(SolutionInfo si, int l, QMatrix Q, double[] p_, byte[] y_, double[] alpha_, double Cp, double Cn, double eps, boolean shrinking) {
     this.l = l;
     this.Q = Q;
-    //this.QD = Q.get_QD();
+    // this.QD = Q.get_QD();
     this.p = p_.clone();
     this.y = y_.clone();
     this.alpha = alpha_.clone();
@@ -183,24 +177,8 @@ public class Solver {
     this.Q_i = new float[l];
     this.Q_j = new float[l];
 
-    // initialize alpha_status
-    {
-      alpha_status = new byte[l];
-      for(int i = 0; i < l; i++) {
-        update_alpha_status(i);
-      }
-    }
-
-    // initialize active set (for shrinking)
-    {
-      active_set = new int[l];
-      for(int i = 0; i < l; i++) {
-        active_set[i] = i;
-      }
-      active_size = l;
-    }
-
-    // initialize gradient
+    initializeAlpha();
+    initializeActiveSet();
     initializeGradient();
 
     // optimization step
@@ -220,27 +198,26 @@ public class Solver {
         }
       }
 
-      if(select_working_set(working_set) != 0) {
+      if(select_working_set(working_set)) {
         // reconstruct the whole gradient
         reconstruct_gradient();
         // reset active set size and check
         active_size = l;
-        if(select_working_set(working_set) != 0) {
+        if(select_working_set(working_set)) {
           break;
         }
         counter = 1; // do shrinking next iteration
       }
 
-      int i = working_set[0], j = working_set[1];
+      final int i = working_set[0], j = working_set[1];
 
       // update alpha[i] and alpha[j], handle bounds carefully
 
       Q.get_Q(i, active_size, Q_i);
       Q.get_Q(j, active_size, Q_j);
 
-      double C_i = get_C(i), C_j = get_C(j);
-
-      double old_alpha_i = alpha[i], old_alpha_j = alpha[j];
+      final double C_i = get_C(i), C_j = get_C(j);
+      final double old_alpha_i = alpha[i], old_alpha_j = alpha[j];
 
       if(y[i] != y[j]) {
         double quad_coef = Q.quadDistance(i, j, (byte) -1);
@@ -277,7 +254,7 @@ public class Solver {
       }
       else {
         double quad_coef = Q.quadDistance(i, j, (byte) +1);
-        //was: QD[i] + QD[j] - 2 * Q_i[j];
+        // was: QD[i] + QD[j] - 2 * Q_i[j];
         double delta = (G[i] - G[j]) / nonzero(quad_coef);
         double sum = alpha[i] + alpha[j];
         alpha[i] -= delta;
@@ -310,25 +287,21 @@ public class Solver {
       }
 
       // update G
-      double delta_alpha_i = alpha[i] - old_alpha_i;
-      double delta_alpha_j = alpha[j] - old_alpha_j;
-      for(int k = 0; k < active_size; k++) {
-        G[k] += Q_i[k] * delta_alpha_i + Q_j[k] * delta_alpha_j;
-      }
+      update_G(i, j, old_alpha_i, old_alpha_j);
 
       // update alpha_status and G_bar
-      boolean ui = is_upper_bound(i), uj = is_upper_bound(j);
+      final boolean ui = is_upper_bound(i), uj = is_upper_bound(j);
       update_alpha_status(i);
       update_alpha_status(j);
       if(ui != is_upper_bound(i)) {
         Q.get_Q(i, l, Q_i);
-        update_G_bar(ui ? -C_i : C_i, Q_i, l);
+        update_G_bar(ui ? -C_i : C_i, Q_i);
       }
-
       if(uj != is_upper_bound(j)) {
         Q.get_Q(j, l, Q_j);
-        update_G_bar(uj ? -C_j : C_j, Q_j, l);
+        update_G_bar(uj ? -C_j : C_j, Q_j);
       }
+
       if(iter >= max_iter) {
         if(active_size < l) {
           // reconstruct the whole gradient to calculate objective
@@ -349,7 +322,8 @@ public class Solver {
     // calculate objective value
     si.obj = calculate_obj();
 
-    // put back the solution
+    // put back the solution, in original order
+    si.alpha = new double[l];
     for(int i = 0; i < l; i++) {
       si.alpha[active_set[i]] = alpha[i];
     }
@@ -358,7 +332,36 @@ public class Solver {
     si.upper_bound_n = Cn;
   }
 
-  private void update_G_bar(double C_i, float[] Q_i, int l) {
+  /**
+   * Initialize the alpha values.
+   */
+  protected void initializeAlpha() {
+    alpha_status = new byte[l];
+    for(int i = 0; i < l; i++) {
+      update_alpha_status(i);
+    }
+  }
+
+  /**
+   * Initialize the active set.
+   */
+  protected void initializeActiveSet() {
+    active_set = new int[l];
+    for(int i = 0; i < l; i++) {
+      active_set[i] = i;
+    }
+    active_size = l;
+  }
+
+  private void update_G(int i, int j, double old_alpha_i, double old_alpha_j) {
+    final double delta_alpha_i = alpha[i] - old_alpha_i;
+    final double delta_alpha_j = alpha[j] - old_alpha_j;
+    for(int k = 0; k < active_size; k++) {
+      G[k] += Q_i[k] * delta_alpha_i + Q_j[k] * delta_alpha_j;
+    }
+  }
+
+  private void update_G_bar(double C_i, float[] Q_i) {
     for(int k = 0; k < l; k++) {
       G_bar[k] += C_i * Q_i[k];
     }
@@ -370,7 +373,7 @@ public class Solver {
     for(int i = 0; i < l; i++) {
       if(!is_lower_bound(i)) {
         Q.get_Q(i, l, Q_i);
-        double alpha_i = alpha[i];
+        final double alpha_i = alpha[i];
         for(int j = 0; j < l; j++) {
           G[j] += alpha_i * Q_i[j];
         }
@@ -395,17 +398,18 @@ public class Solver {
     return d > 0 ? d : 1e-12;
   }
 
-  // return 1 if already optimal, return 0 otherwise
-  int select_working_set(int[] working_set) {
-    // return i,j such that
-    // i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
-    // j: minimizes the decrease of obj value
-    // (if quadratic coefficeint <= 0, replace it with tau)
-    // -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
+  // @return true if already optimal
+  boolean select_working_set(int[] working_set) {
+    final double Gmax = maxViolating(working_set);
+    final double Gmax2 = minViolating(working_set, Gmax);
+    return (Gmax + Gmax2 < eps);
+  }
 
-    double Gmax = Double.NEGATIVE_INFINITY, Gmax2 = Double.NEGATIVE_INFINITY;
-    int Gmax_idx = -1, Gmin_idx = -1;
-    double obj_diff_min = Double.POSITIVE_INFINITY;
+  // Classic SMO
+  // i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
+  protected double maxViolating(int[] working_set) {
+    double Gmax = Double.NEGATIVE_INFINITY;
+    int Gmax_idx = -1;
 
     for(int t = 0; t < active_size; t++) {
       if(y[t] == +1) {
@@ -425,23 +429,38 @@ public class Solver {
         }
       }
     }
+    working_set[0] = Gmax_idx;
+    return Gmax;
+  }
 
-    final int i = Gmax_idx;
+  // LibSVM enhancement to SMO.
+  //
+  // Exploits that we need the kernel values with respect to the
+  // previously chosen i (working_set[0]) anyway. So we can compute
+  // them now, and use them to choose a better candidate.
+  //
+  // j: minimizes the decrease of obj value
+  // (if quadratic coefficeint <= 0, replace it with tau)
+  // -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
+  protected double minViolating(int[] working_set, double Gi) {
+    final int i = working_set[0];
     if(i != -1) { // null Q_i not accessed: Gmax=-INF if i=-1
       // Prepare cache.
       Q.get_Q(i, active_size, null);
       // was: Q.get_Q(i, active_size, Q_i);
     }
 
+    double Gjmax = Double.NEGATIVE_INFINITY;
+    int Gmin_idx = -1;
+    double obj_diff_min = Double.POSITIVE_INFINITY;
     for(int j = 0; j < active_size; j++) {
       if(y[j] == +1) {
         if(!is_lower_bound(j)) {
-          double grad_diff = Gmax + G[j];
-          if(G[j] >= Gmax2) {
-            Gmax2 = G[j];
-          }
-          if(grad_diff > 0) {
-            double quad_coef = Q.quadDistance(i, j, y[i]); // QD[i] + QD[j] - 2.0 * y[i] * Q_i[j];
+          double grad_diff = Gi + G[j];
+          Gjmax = (G[j] >= Gjmax) ? G[j] : Gjmax;
+          if(grad_diff > 0) { // Constraint check
+            double quad_coef = Q.quadDistance(i, j, y[i]);
+            // was: QD[i] + QD[j] - 2.0 * y[i] * Q_i[j];
             double obj_diff = -(grad_diff * grad_diff) / nonzero(quad_coef);
 
             if(obj_diff <= obj_diff_min) {
@@ -453,12 +472,11 @@ public class Solver {
       }
       else {
         if(!is_upper_bound(j)) {
-          double grad_diff = Gmax - G[j];
-          if(-G[j] >= Gmax2) {
-            Gmax2 = -G[j];
-          }
-          if(grad_diff > 0) {
-            double quad_coef = Q.quadDistance(i, j, (byte) -y[i]); // QD[i] + QD[j] + 2.0 * y[i] * Q_i[j];
+          double grad_diff = Gi - G[j];
+          Gjmax = (-G[j] >= Gjmax) ? -G[j] : Gjmax;
+          if(grad_diff > 0) { // Constraint check
+            double quad_coef = Q.quadDistance(i, j, (byte) -y[i]);
+            // max: QD[i] + QD[j] + 2.0 * y[i] * Q_i[j];
             double obj_diff = -(grad_diff * grad_diff) / nonzero(quad_coef);
 
             if(obj_diff <= obj_diff_min) {
@@ -469,24 +487,8 @@ public class Solver {
         }
       }
     }
-
-    if(Gmax + Gmax2 < eps) {
-      return 1;
-    }
-
-    working_set[0] = Gmax_idx;
     working_set[1] = Gmin_idx;
-    return 0;
-  }
-
-  private boolean be_shrunk(int i, double Gmax1, double Gmax2) {
-    if(is_upper_bound(i)) {
-      return (y[i] == +1) ? (-G[i] > Gmax1) : (-G[i] > Gmax2);
-    }
-    if(is_lower_bound(i)) {
-      return (y[i] == +1) ? (G[i] > Gmax2) : (G[i] > Gmax1);
-    }
-    return false;
+    return Gjmax;
   }
 
   void do_shrinking() {
@@ -497,28 +499,21 @@ public class Solver {
 
     // find maximal violating pair first
     for(int i = 0; i < active_size; i++) {
+      final double Gi = G[i];
       if(y[i] == +1) {
         if(!is_upper_bound(i)) {
-          if(-G[i] >= Gmax1) {
-            Gmax1 = -G[i];
-          }
+          Gmax1 = (-Gi > Gmax1) ? -Gi : Gmax1;
         }
         if(!is_lower_bound(i)) {
-          if(G[i] >= Gmax2) {
-            Gmax2 = G[i];
-          }
+          Gmax2 = (Gi > Gmax2) ? Gi : Gmax2;
         }
       }
       else {
         if(!is_upper_bound(i)) {
-          if(-G[i] >= Gmax2) {
-            Gmax2 = -G[i];
-          }
+          Gmax2 = (-Gi >= Gmax2) ? -Gi : Gmax2;
         }
         if(!is_lower_bound(i)) {
-          if(G[i] >= Gmax1) {
-            Gmax1 = G[i];
-          }
+          Gmax1 = (Gi >= Gmax1) ? Gi : Gmax1;
         }
       }
     }
@@ -539,6 +534,16 @@ public class Solver {
         }
       }
     }
+  }
+
+  private boolean be_shrunk(int i, double Gmax1, double Gmax2) {
+    if(is_upper_bound(i)) {
+      return (y[i] == +1) ? (-G[i] > Gmax1) : (-G[i] > Gmax2);
+    }
+    if(is_lower_bound(i)) {
+      return (y[i] == +1) ? (G[i] > Gmax2) : (G[i] > Gmax1);
+    }
+    return false;
   }
 
   double calculate_rho() {

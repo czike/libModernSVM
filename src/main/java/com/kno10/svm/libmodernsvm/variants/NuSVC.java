@@ -42,19 +42,20 @@ public class NuSVC<T> extends AbstractSVC<T> {
     double[] zeros = new double[l];
 
     SVC_Q Q = new SVC_Q(x, kernel_function, cache_size, y);
-    Solver.SolutionInfo si = new Solver_NU().solve(l, Q, zeros, y, alpha, 1., 1., eps, shrinking);
+    Solver_NU solver = new Solver_NU();
+    Solver.SolutionInfo si = solver.solve(l, Q, zeros, y, alpha, 1., 1., eps, shrinking);
     if(LOG.isLoggable(Level.INFO)) {
-      LOG.info("C = " + 1 / si.r);
+      LOG.info("C = " + 1 / solver.r);
     }
 
     for(int i = 0; i < l; i++) {
-      si.alpha[i] *= y[i] / si.r;
+      si.alpha[i] *= y[i] / solver.r;
     }
 
-    si.rho /= si.r;
-    si.obj /= (si.r * si.r);
-    si.upper_bound_p = 1 / si.r;
-    si.upper_bound_n = 1 / si.r;
+    si.rho /= solver.r;
+    si.obj /= (solver.r * solver.r);
+    si.upper_bound_p = 1 / solver.r;
+    si.upper_bound_n = 1 / solver.r;
     return si;
   }
 
