@@ -66,7 +66,8 @@ public class Solver_NU extends Solver {
 						Gmaxp2 = G[j];
 					}
 					if (grad_diff > 0) {
-						double quad_coef = QD[ip] + QD[j] - 2 * Q_ip[j];
+						double quad_coef = Q.quadDistance(ip, j, (byte) +1);
+						// was: QD[ip] + QD[j] - 2 * Q_ip[j];
 						double obj_diff = -(grad_diff * grad_diff)
 								/ nonzero(quad_coef);
 
@@ -83,7 +84,8 @@ public class Solver_NU extends Solver {
 						Gmaxn2 = -G[j];
 					}
 					if (grad_diff > 0) {
-						double quad_coef = QD[in] + QD[j] - 2 * Q_in[j];
+						double quad_coef = Q.quadDistance(in, j, (byte) +1);
+						// was: QD[in] + QD[j] - 2 * Q_in[j];
 						double obj_diff = -(grad_diff * grad_diff)
 								/ nonzero(quad_coef);
 

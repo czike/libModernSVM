@@ -64,4 +64,11 @@ public class SVR_Q extends Kernel {
       out[j] = (float) si * sign[j] * data[index[j]];
     }
   }
+
+  @Override
+  public double quadDistance(int i, int j, byte b) {
+    final int real_i = index[i], real_j = index[j];
+    float[] Q_i = cache.get_data(real_i, l);
+    return QD[i] + QD[j] - 2.0 * b * sign[i] * sign[j] * Q_i[real_j];
+  }
 }

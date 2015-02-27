@@ -45,7 +45,7 @@ public class Solver {
 
   QMatrix Q;
 
-  double[] QD;
+  //double[] QD;
 
   double eps;
 
@@ -172,7 +172,7 @@ public class Solver {
   void solve(SolutionInfo si, int l, QMatrix Q, double[] p_, byte[] y_, double[] alpha_, double Cp, double Cn, double eps, boolean shrinking) {
     this.l = l;
     this.Q = Q;
-    this.QD = Q.get_QD();
+    //this.QD = Q.get_QD();
     this.p = p_.clone();
     this.y = y_.clone();
     this.alpha = alpha_.clone();
@@ -243,7 +243,8 @@ public class Solver {
       double old_alpha_i = alpha[i], old_alpha_j = alpha[j];
 
       if(y[i] != y[j]) {
-        double quad_coef = QD[i] + QD[j] + 2 * Q_i[j];
+        double quad_coef = Q.quadDistance(i, j, (byte) -1);
+        // was: QD[i] + QD[j] + 2 * Q_i[j];
         double delta = (-G[i] - G[j]) / nonzero(quad_coef);
         double diff = alpha[i] - alpha[j];
         alpha[i] += delta;
@@ -275,7 +276,8 @@ public class Solver {
         }
       }
       else {
-        double quad_coef = QD[i] + QD[j] - 2 * Q_i[j];
+        double quad_coef = Q.quadDistance(i, j, (byte) +1);
+        //was: QD[i] + QD[j] - 2 * Q_i[j];
         double delta = (G[i] - G[j]) / nonzero(quad_coef);
         double sum = alpha[i] + alpha[j];
         alpha[i] -= delta;
@@ -397,7 +399,7 @@ public class Solver {
   int select_working_set(int[] working_set) {
     // return i,j such that
     // i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
-    // j: mimimizes the decrease of obj value
+    // j: minimizes the decrease of obj value
     // (if quadratic coefficeint <= 0, replace it with tau)
     // -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
 
@@ -424,9 +426,11 @@ public class Solver {
       }
     }
 
-    int i = Gmax_idx;
+    final int i = Gmax_idx;
     if(i != -1) { // null Q_i not accessed: Gmax=-INF if i=-1
-      Q.get_Q(i, active_size, Q_i);
+      // Prepare cache.
+      Q.get_Q(i, active_size, null);
+      // was: Q.get_Q(i, active_size, Q_i);
     }
 
     for(int j = 0; j < active_size; j++) {
@@ -437,7 +441,7 @@ public class Solver {
             Gmax2 = G[j];
           }
           if(grad_diff > 0) {
-            double quad_coef = QD[i] + QD[j] - 2.0 * y[i] * Q_i[j];
+            double quad_coef = Q.quadDistance(i, j, y[i]); // QD[i] + QD[j] - 2.0 * y[i] * Q_i[j];
             double obj_diff = -(grad_diff * grad_diff) / nonzero(quad_coef);
 
             if(obj_diff <= obj_diff_min) {
@@ -454,7 +458,7 @@ public class Solver {
             Gmax2 = -G[j];
           }
           if(grad_diff > 0) {
-            double quad_coef = QD[i] + QD[j] + 2.0 * y[i] * Q_i[j];
+            double quad_coef = Q.quadDistance(i, j, (byte) -y[i]); // QD[i] + QD[j] + 2.0 * y[i] * Q_i[j];
             double obj_diff = -(grad_diff * grad_diff) / nonzero(quad_coef);
 
             if(obj_diff <= obj_diff_min) {

@@ -68,6 +68,13 @@ public class Kernel implements QMatrix {
 
   public void get_Q(int i, int len, float[] out) {
     float[] data = cache.get_data(i, len);
-    System.arraycopy(data, 0, out, 0, len);
+    if(out != null)
+      System.arraycopy(data, 0, out, 0, len);
+  }
+
+  @Override
+  public double quadDistance(int i, int j, byte b) {
+    float[] Q_i = cache.get_data(i, j + 1);
+    return QD[i] + QD[j] - 2.0 * b * Q_i[j];
   }
 }

@@ -29,4 +29,14 @@ public interface QMatrix {
 	 * @param j Second entry
 	 */
 	void swap_index(int i, int j);
+
+	/**
+	 * Distance, with sign parameter.
+	 * 
+	 * @param i First entry
+	 * @param j Second entry
+	 * @param b Sign
+	 * @return Distance
+	 */
+  double quadDistance(int i, int j, byte b);
 }
