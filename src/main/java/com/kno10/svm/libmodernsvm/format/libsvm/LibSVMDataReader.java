@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+import javolution.text.Cursor;
 import javolution.text.TypeFormat;
 
 import com.kno10.svm.libmodernsvm.data.ByteWeightedArrayDataSet;
@@ -23,17 +24,20 @@ public class LibSVMDataReader {
       String line;
       int[] idx = new int[100];
       double[] val = new double[100];
+      Cursor cursor = new Cursor();
       while((line = r.readLine()) != null) {
-        String[] b = p.split(line);
-        byte c = TypeFormat.parseByte(b[0]);
+        cursor.setIndex(0);
+        byte c = TypeFormat.parseByte(line, cursor);
         int dim = 0;
-        for(int j = 1; j < b.length; dim++) {
+        while(cursor.skip(' ', line) && cursor.getIndex() < line.length()) {
           if(dim == idx.length) { // Resize buffer.
             idx = Arrays.copyOf(idx, dim << 1);
             val = Arrays.copyOf(val, dim << 1);
           }
-          idx[dim] = TypeFormat.parseInt(b[j++]) - 1;
-          val[dim] = TypeFormat.parseDouble(b[j++]);
+          idx[dim] = TypeFormat.parseInt(line, cursor) - 1;
+          cursor.skip(':', line);
+          val[dim] = TypeFormat.parseDouble(line, cursor);
+          ++dim;
         }
         UnsafeSparseVector d = new UnsafeSparseVector(idx, val, dim);
         data.add(d, c);
@@ -46,5 +50,4 @@ public class LibSVMDataReader {
     }
     return data;
   }
-
 }

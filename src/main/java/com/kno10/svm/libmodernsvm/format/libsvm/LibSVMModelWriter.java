@@ -54,21 +54,21 @@ public class LibSVMModelWriter {
       tb.append(' ');
       tb.append((float) m.rho[i]);
     }
-    p.println(tb);
+    p.append(tb).println();
     tb.clear();
     tb.append("label");
     for(int i = 0; i < m.label.length; i++) {
       tb.append(' ');
       tb.append(m.label[i]);
     }
-    p.println(tb);
+    p.append(tb).println();
     tb.clear();
     tb.append("nr_sv");
     for(int i = 0; i < m.nSV.length; i++) {
       tb.append(' ');
       tb.append(m.nSV[i]);
     }
-    p.println(tb);
+    p.append(tb).println();
     p.println("SV");
     for(int j = 0, n = m.SV.size(); j < n; ++j) {
       tb.clear();
@@ -88,7 +88,7 @@ public class LibSVMModelWriter {
         append(sv.value(i), tb);
       }
       tb.append(' '); // Compatibility with libsvm output
-      p.println(tb);
+      p.append(tb).println();
     }
     p.close();
   }
