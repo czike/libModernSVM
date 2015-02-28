@@ -3,4 +3,4 @@
  *
  * @author Erich Schubert
  */
-package com.kno10.svm.libmodernsvm.kernelfunction.unsafe;
+package com.kno10.svm.libmodernsvm.kernelfunction.offheap;

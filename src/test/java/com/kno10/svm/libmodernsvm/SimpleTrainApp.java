@@ -9,8 +9,9 @@ import com.kno10.svm.libmodernsvm.data.DataSet;
 import com.kno10.svm.libmodernsvm.format.libsvm.LibSVMDataReader;
 import com.kno10.svm.libmodernsvm.format.libsvm.LibSVMModelWriter;
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
-import com.kno10.svm.libmodernsvm.kernelfunction.unsafe.LinearKernelFunction;
-import com.kno10.svm.libmodernsvm.kernelfunction.unsafe.UnsafeSparseVector;
+import com.kno10.svm.libmodernsvm.kernelfunction.LinearKernelFunction;
+import com.kno10.svm.libmodernsvm.kernelfunction.offheap.OffHeapSparseVector;
+import com.kno10.svm.libmodernsvm.kernelfunction.offheap.OffHeapSparseVectorBuilder;
 import com.kno10.svm.libmodernsvm.model.ClassificationModel;
 import com.kno10.svm.libmodernsvm.variants.AbstractSVC;
 import com.kno10.svm.libmodernsvm.variants.CSVC;
@@ -26,14 +27,15 @@ public class SimpleTrainApp {
 
   public static void main(String[] args) {
     try {
-      DataSet<UnsafeSparseVector> data = LibSVMDataReader.loadData(new FileInputStream(args[0]));
+      OffHeapSparseVectorBuilder b = new OffHeapSparseVectorBuilder();
+      DataSet<OffHeapSparseVector> data = LibSVMDataReader.loadData(new FileInputStream(args[0]), b);
       double gamma = 1. / dimensionality(data); // Default: 1/numfeatures
       // KernelFunction<UnsafeSparseVector> kf = new
       // RadialBasisKernelFunction(gamma);
-      KernelFunction<UnsafeSparseVector> kf = new LinearKernelFunction();
+      KernelFunction<OffHeapSparseVector> kf = new LinearKernelFunction<OffHeapSparseVector>();
       System.err.println("Data set size: " + data.size());
-      ClassificationModel<UnsafeSparseVector> m;
-      AbstractSVC<UnsafeSparseVector> svm = new CSVC<UnsafeSparseVector>(1e-3, true, 500);
+      ClassificationModel<OffHeapSparseVector> m;
+      AbstractSVC<OffHeapSparseVector> svm = new CSVC<OffHeapSparseVector>(1e-3, true, 2000);
       // AbstractSVC<UnsafeSparseVector> svm = new NuSVC<UnsafeSparseVector>(1,
       // true, 500, .5);
       m = svm.train(data, kf, null);
@@ -46,10 +48,10 @@ public class SimpleTrainApp {
     }
   }
 
-  private static int dimensionality(DataSet<UnsafeSparseVector> data) {
+  private static int dimensionality(DataSet<OffHeapSparseVector> data) {
     int max = -1;
     for(int i = 0; i < data.size(); ++i) {
-      UnsafeSparseVector v = data.get(i);
+      OffHeapSparseVector v = data.get(i);
       for(int j = 0, l = v.size(); j < l; ++j) {
         int idx = v.index(j);
         max = (idx > max) ? idx : max;

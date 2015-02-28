@@ -1,8 +1,6 @@
-package com.kno10.svm.libmodernsvm.kernelfunction.unsafe;
+package com.kno10.svm.libmodernsvm.kernelfunction;
 
-import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
-
-public abstract class AbstractKernelFunction implements KernelFunction<UnsafeSparseVector> {
+public abstract class AbstractKernelFunction<V extends Vector<V>> implements KernelFunction<V> {
   protected static double powi(double base, int exp) {
     if(exp <= 2) {
       return Math.pow(base, exp);

@@ -1,9 +1,10 @@
-package com.kno10.svm.libmodernsvm.kernelfunction.unsafe;
+package com.kno10.svm.libmodernsvm.kernelfunction;
+
 
 /**
  * Polynomial kernel.
  */
-public class PolynomialKernelFunction extends AbstractKernelFunction {
+public class PolynomialKernelFunction<V extends Vector<V>> extends AbstractKernelFunction<V> {
   /** Kernel degree */
   private final int degree;
 
@@ -20,8 +21,9 @@ public class PolynomialKernelFunction extends AbstractKernelFunction {
     this.coef0 = coef0;
   }
 
-  public double similarity(UnsafeSparseVector x, UnsafeSparseVector y) {
-    return powi(gamma * UnsafeSparseVector.dot(x, y) + coef0, degree);
+  @Override
+  public double similarity(V x, V y) {
+    return powi(gamma * x.dot(y) + coef0, degree);
   }
 
   public int degree() {

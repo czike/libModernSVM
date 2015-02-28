@@ -7,17 +7,17 @@ import javolution.text.TextBuilder;
 import javolution.text.TypeFormat;
 
 import com.kno10.svm.libmodernsvm.kernelfunction.KernelFunction;
-import com.kno10.svm.libmodernsvm.kernelfunction.unsafe.LinearKernelFunction;
-import com.kno10.svm.libmodernsvm.kernelfunction.unsafe.PolynomialKernelFunction;
-import com.kno10.svm.libmodernsvm.kernelfunction.unsafe.RadialBasisKernelFunction;
-import com.kno10.svm.libmodernsvm.kernelfunction.unsafe.UnsafeSparseVector;
+import com.kno10.svm.libmodernsvm.kernelfunction.LinearKernelFunction;
+import com.kno10.svm.libmodernsvm.kernelfunction.PolynomialKernelFunction;
+import com.kno10.svm.libmodernsvm.kernelfunction.RadialBasisKernelFunction;
+import com.kno10.svm.libmodernsvm.kernelfunction.Vector;
 import com.kno10.svm.libmodernsvm.model.ClassificationModel;
 import com.kno10.svm.libmodernsvm.variants.AbstractSVC;
 import com.kno10.svm.libmodernsvm.variants.CSVC;
 import com.kno10.svm.libmodernsvm.variants.NuSVC;
 
 public class LibSVMModelWriter {
-  public static void writeModel(PrintWriter p, ClassificationModel<UnsafeSparseVector> m, AbstractSVC<UnsafeSparseVector> svm, KernelFunction<UnsafeSparseVector> kf) throws IOException {
+  public static void writeModel(PrintWriter p, ClassificationModel<? extends Vector<?>> m, AbstractSVC<?> svm, KernelFunction<?> kf) throws IOException {
     TextBuilder tb = new TextBuilder();
     // FIXME: make extensible?
     if(svm instanceof CSVC) {
@@ -35,13 +35,13 @@ public class LibSVMModelWriter {
     }
     else if(kf instanceof PolynomialKernelFunction) {
       p.println("kernel_type polynomial");
-      p.println("degree " + ((PolynomialKernelFunction) kf).degree());
-      p.println("gamma" + ((PolynomialKernelFunction) kf).gamma());
-      p.println("coeff0 " + ((PolynomialKernelFunction) kf).coeff0());
+      p.println("degree " + ((PolynomialKernelFunction<?>) kf).degree());
+      p.println("gamma" + ((PolynomialKernelFunction<?>) kf).gamma());
+      p.println("coeff0 " + ((PolynomialKernelFunction<?>) kf).coeff0());
     }
     else if(kf instanceof RadialBasisKernelFunction) {
       p.println("kernel_type rbf");
-      p.println("gamma " + ((RadialBasisKernelFunction) kf).gamma());
+      p.println("gamma " + ((RadialBasisKernelFunction<?>) kf).gamma());
     }
     else {
       System.err.println("Unknown kernel function: " + kf.toString());
@@ -80,7 +80,7 @@ public class LibSVMModelWriter {
         tb.append(m.sv_coef[i][j], 16, false, false);
       }
       // Print vector
-      UnsafeSparseVector sv = m.SV.get(j);
+      Vector<?> sv = m.SV.get(j);
       for(int i = 0, l = sv.size(); i < l; ++i) {
         tb.append(' ');
         TypeFormat.format(sv.index(i) + 1, tb);

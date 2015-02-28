@@ -1,14 +1,31 @@
-package com.kno10.svm.libmodernsvm.kernelfunction.unsafe;
+package com.kno10.svm.libmodernsvm.kernelfunction.offheap;
 
 import java.lang.reflect.Field;
 
 import sun.misc.Unsafe;
 
+import com.kno10.svm.libmodernsvm.kernelfunction.Vector;
+
 /**
  * More compact sparse vector type.
+ * 
+ * Note: this may appear very "sexy" initially to allocate the vectors off-heap,
+ * and access them low level. But unfortunately we need to integrate this
+ * carefully with Java memory management. And then it suddenly comes with quite
+ * some overhead.
+ * 
+ * <ul>
+ * <li>The {@link #finalize()} method is implemented in Java via a special
+ * {@link java.lang.ref.Finalizer} instance, which needs 40 bytes of memory.</li>
+ * <li>The address is always a {@code long} address, so the vector uses 24 bytes
+ * of memory.</li>
+ * <li>Usually, the C library will need another 4-16 bytes of overhead (size).</li>
+ * <li>Since we do not check bounds and {@link Unsafe}, using this class
+ * potentially allows reading all Java memory.</li>
+ * </ul>
  */
 @SuppressWarnings("restriction")
-public class UnsafeSparseVector {
+public class OffHeapSparseVector implements Vector<OffHeapSparseVector> {
   /**
    * Base address of the vectors memory
    */
@@ -22,22 +39,22 @@ public class UnsafeSparseVector {
   /**
    * Memory requirement per integer.
    */
-  public final static int BYTES_PER_INDEX = Integer.SIZE >>> 3;
+  private final static int BYTES_PER_INDEX = Integer.SIZE >>> 3;
 
   /**
    * Memory requirement per double.
    */
-  public final static int BYTES_PER_VALUE = Double.SIZE >>> 3;
+  private final static int BYTES_PER_VALUE = Double.SIZE >>> 3;
 
   /**
    * Memory requirement per entry.
    */
-  public final static int BYTES_PER_ENTRY = BYTES_PER_INDEX + BYTES_PER_VALUE;
+  private final static int BYTES_PER_ENTRY = BYTES_PER_INDEX + BYTES_PER_VALUE;
 
   /**
    * Unsafe memory access.
    */
-  static final Unsafe unsafe;
+  private static final Unsafe unsafe;
 
   // Initialize the unsafe object
   static {
@@ -62,7 +79,7 @@ public class UnsafeSparseVector {
    * @param value Values
    * @param size Number of valid components.
    */
-  public UnsafeSparseVector(int[] index, double[] value, int size) {
+  public OffHeapSparseVector(int[] index, double[] value, int size) {
     super();
     long addr = this.address = unsafe.allocateMemory(index.length * BYTES_PER_ENTRY);
     this.size = size;
@@ -83,11 +100,7 @@ public class UnsafeSparseVector {
     super.finalize();
   }
 
-  /**
-   * Number of valid entries in this sparse vector.
-   * 
-   * @return Size
-   */
+  @Override
   public int size() {
     return size;
   }
@@ -100,6 +113,7 @@ public class UnsafeSparseVector {
    * @param i Position
    * @return Index
    */
+  @Override
   public int index(int i) {
     assert (i >= 0 && i < size);
     return unsafe.getInt(address + BYTES_PER_ENTRY * i);
@@ -113,6 +127,7 @@ public class UnsafeSparseVector {
    * @param i Position
    * @return Value
    */
+  @Override
   public double value(int i) {
     assert (i >= 0 && i < size);
     return unsafe.getDouble(address + BYTES_PER_ENTRY * i + BYTES_PER_INDEX);
@@ -121,14 +136,14 @@ public class UnsafeSparseVector {
   /**
    * Dot product of two vectors. Low level.
    * 
-   * @param x First vector
    * @param y Second vector
    * @return Dot product
    */
-  public static double dot(UnsafeSparseVector x, UnsafeSparseVector y) {
+  @Override
+  public double dot(OffHeapSparseVector y) {
     double sum = 0.;
-    long addr1 = x.address, addr2 = y.address;
-    final long aend1 = x.address + BYTES_PER_ENTRY * x.size;
+    long addr1 = this.address, addr2 = y.address;
+    final long aend1 = this.address + BYTES_PER_ENTRY * this.size;
     final long aend2 = y.address + BYTES_PER_ENTRY * y.size;
     while(addr1 < aend1 && addr2 < aend2) {
       final int xi = unsafe.getInt(addr1), yi = unsafe.getInt(addr2);
@@ -152,50 +167,46 @@ public class UnsafeSparseVector {
   /**
    * Squared Euclidean distance of two vectors.
    * 
-   * @param x First vector
    * @param y Second vector
    * @return Squared Euclidean distance
    */
-  public static double squareEuclidean(UnsafeSparseVector x, UnsafeSparseVector y) {
+  public double squareEuclidean(OffHeapSparseVector y) {
     double sum = 0.;
-    long addr1 = x.address, addr2 = y.address;
-    final long aend1 = x.address + BYTES_PER_ENTRY * x.size;
-    final long aend2 = y.address + BYTES_PER_ENTRY * y.size;
-    while(addr1 < aend1 && addr2 < aend2) {
+    long addr1 = this.address, addr2 = y.address;
+    final long aend1 = addr1 + BYTES_PER_ENTRY * this.size;
+    final long aend2 = addr2 + BYTES_PER_ENTRY * y.size;
+    while(true) {
       final int xi = unsafe.getInt(addr1), yi = unsafe.getInt(addr2);
-      if(xi == yi) {
+      double d = 0.;
+      if(xi <= yi) {
         addr1 += BYTES_PER_INDEX;
-        addr2 += BYTES_PER_INDEX;
-        double d = unsafe.getDouble(addr1) - unsafe.getDouble(addr2);
-        sum += d * d;
-        addr1 += BYTES_PER_VALUE;
-        addr2 += BYTES_PER_VALUE;
-      }
-      else if(xi < yi) {
-        addr1 += BYTES_PER_INDEX;
-        double d = unsafe.getDouble(addr1);
-        sum += d * d;
+        d += unsafe.getDouble(addr1);
         addr1 += BYTES_PER_VALUE;
       }
-      else {
+      if(yi <= xi) {
         addr2 += BYTES_PER_INDEX;
-        double d = unsafe.getDouble(addr2);
-        sum += d * d;
+        d -= unsafe.getDouble(addr2);
         addr2 += BYTES_PER_VALUE;
       }
-    }
-    while(addr1 < aend1) {
-      addr1 += BYTES_PER_INDEX;
-      double d = unsafe.getDouble(addr1);
       sum += d * d;
-      addr1 += BYTES_PER_VALUE;
+      if(addr2 == aend2) {
+        while(addr1 < aend1) {
+          addr1 += BYTES_PER_INDEX;
+          double d2 = unsafe.getDouble(addr1);
+          sum += d2 * d2;
+          addr1 += BYTES_PER_VALUE;
+        }
+        return sum;
+      }
+      if(addr1 == aend1) {
+        while(addr2 < aend2) {
+          addr2 += BYTES_PER_INDEX;
+          double d2 = unsafe.getDouble(addr2);
+          sum += d2 * d2;
+          addr2 += BYTES_PER_VALUE;
+        }
+        return sum;
+      }
     }
-    while(addr2 < aend2) {
-      addr2 += BYTES_PER_INDEX;
-      double d = unsafe.getDouble(addr2);
-      sum += d * d;
-      addr2 += BYTES_PER_VALUE;
-    }
-    return sum;
   }
 }
