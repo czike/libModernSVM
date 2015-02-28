@@ -5,9 +5,10 @@ import java.lang.reflect.Field;
 import sun.misc.Unsafe;
 
 import com.kno10.svm.libmodernsvm.kernelfunction.Vector;
+import com.kno10.svm.libmodernsvm.kernelfunction.unsafeonheap.UnsafeSparseVector;
 
 /**
- * More compact sparse vector type.
+ * Compact sparse vector type using <em>off-heap memory</em>.
  * 
  * Note: this may appear very "sexy" initially to allocate the vectors off-heap,
  * and access them low level. But unfortunately we need to integrate this
@@ -23,6 +24,10 @@ import com.kno10.svm.libmodernsvm.kernelfunction.Vector;
  * <li>Since we do not check bounds and {@link Unsafe}, using this class
  * potentially allows reading all Java memory.</li>
  * </ul>
+ * 
+ * Largely due to the finalizer, the expected overhead of this implementation is
+ * 68 bytes. See {@link UnsafeSparseVector} for an unsafe on-heap implementation
+ * with less overhead.
  */
 @SuppressWarnings("restriction")
 public class OffHeapSparseVector implements Vector<OffHeapSparseVector> {
@@ -81,7 +86,7 @@ public class OffHeapSparseVector implements Vector<OffHeapSparseVector> {
    */
   public OffHeapSparseVector(int[] index, double[] value, int size) {
     super();
-    long addr = this.address = unsafe.allocateMemory(index.length * BYTES_PER_ENTRY);
+    long addr = this.address = unsafe.allocateMemory(size * BYTES_PER_ENTRY);
     this.size = size;
     for(int i = 0; i < size; i++) {
       unsafe.putInt(addr, index[i]);
@@ -145,23 +150,24 @@ public class OffHeapSparseVector implements Vector<OffHeapSparseVector> {
     long addr1 = this.address, addr2 = y.address;
     final long aend1 = this.address + BYTES_PER_ENTRY * this.size;
     final long aend2 = y.address + BYTES_PER_ENTRY * y.size;
-    while(addr1 < aend1 && addr2 < aend2) {
+    while(true) {
       final int xi = unsafe.getInt(addr1), yi = unsafe.getInt(addr2);
       if(xi == yi) {
-        addr1 += BYTES_PER_INDEX;
-        addr2 += BYTES_PER_INDEX;
-        sum += unsafe.getDouble(addr1) * unsafe.getDouble(addr2);
-        addr1 += BYTES_PER_VALUE;
-        addr2 += BYTES_PER_VALUE;
+        sum += unsafe.getDouble(addr1 + BYTES_PER_INDEX) * unsafe.getDouble(addr2 + BYTES_PER_INDEX);
       }
-      else if(xi < yi) {
+      if(xi <= yi) {
         addr1 += BYTES_PER_ENTRY;
+        if(addr1 == aend1) {
+          return sum;
+        }
       }
-      else {
+      if(yi <= xi) {
         addr2 += BYTES_PER_ENTRY;
+        if(addr2 == aend2) {
+          return sum;
+        }
       }
     }
-    return sum;
   }
 
   /**

@@ -3,13 +3,28 @@ package com.kno10.svm.libmodernsvm.kernelfunction.sparsevec;
 import com.kno10.svm.libmodernsvm.kernelfunction.Vector;
 
 /**
- * More compact sparse vector type.
+ * Compact sparse vector in pure Java, using {@code int[]} and {@code double[]}
+ * for storage.
+ * 
+ * This implementation is safe, with Java performing the bound checks.
  */
 public class SparseVector implements Vector<SparseVector> {
+  /**
+   * Indexes of nonzero values.
+   */
   public int[] index;
 
+  /**
+   * Nonzero entries.
+   */
   public double[] value;
 
+  /**
+   * Constructor.
+   * 
+   * @param index Index array
+   * @param value Value array
+   */
   public SparseVector(int[] index, double[] value) {
     super();
     this.index = index;
@@ -36,21 +51,29 @@ public class SparseVector implements Vector<SparseVector> {
     double sum = 0.;
     final int xlen = this.index.length, ylen = y.index.length;
     int i = 0, j = 0;
-    while(i < xlen && j < ylen) {
+    while(true) {
       int xi = this.index[i], yi = y.index[j];
       if(xi == yi) {
         sum += this.value[i++] * y.value[j++];
+        if(i == xlen || j == ylen) {
+          return sum;
+        }
       }
       else {
-        if(xi > yi) {
-          ++j;
+        if(xi < yi) {
+          ++i;
+          if(i == xlen) {
+            return sum;
+          }
         }
         else {
-          ++i;
+          ++j;
+          if(j == ylen) {
+            return sum;
+          }
         }
       }
     }
-    return sum;
   }
 
   @Override
