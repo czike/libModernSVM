@@ -85,7 +85,7 @@ public abstract class AbstractSVC<T> extends AbstractSingleSVM<T> {
           }
         }
         if(LOG.isLoggable(Level.INFO)) {
-          LOG.info(String.format("Trained %d of %d 1vs1 SVMs", p + 1, nr_class * (nr_class - 1) / 1));
+          LOG.info(String.format("Trained %d of %d 1vs1 SVMs", p + 1, nr_class * (nr_class - 1) / 2));
         }
       }
     }
